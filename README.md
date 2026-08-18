@@ -1,6 +1,6 @@
 # RC카 자율주행 — 차량 파트 제출본 (2026-08-10)
 
-2026-08-10 시연에서 **무개입 완주 3회**를 낸 차량 주행 코드와, 그 차량에 비전 신호를
+2026-08-10 시연에서 **완주**한 차량 주행 코드와, 그 차량에 비전 신호를
 공급하는 **비전 실행체**를 한 묶음으로 정리한 것.
 
 | 폴더 | 무엇 | 실행 위치 |
@@ -14,15 +14,16 @@
 ├── rc_car/            # 주행 (python3 main.py)
 ├── vision_runner/     # 비전 (python3 vision_runner.py)
 ├── map/               # main_track_map.yaml · places.yaml
-└── README.md          # 이 문서
+└── README.md
 ```
 
 ---
 
 ## 1. 두 프로세스가 어떻게 만나는가
 
-카메라는 **비전이 소유**함. 주행 코드는 카메라를 열지 않고, 비전이 tmpfs에 원자적으로
-게시한 최신 결과를 **논블로킹으로 당겨 읽음**(pull). 두 프로세스는 파일 하나로만 만남.
+카메라는 비전 프로세스만 열고, 주행 코드는 카메라에 직접 접근하지 않음. 비전이 인식
+결과를 tmpfs 파일에 계속 덮어쓰면, 주행 쪽이 자기 주기(10Hz)로 그 파일을 읽어감(pull).
+두 프로세스는 파일 단위로 통신.
 
 ```
  [카메라 CSI]
@@ -38,18 +39,21 @@
               (timestamp 포함, 원자적 교체)
 ```
 
-게시 payload(`vision_runner.py`)와 소비 측 계약:
+게시 파일(`vision_latest.json`)의 필드와 읽는 쪽의 사용처:
 
-| payload 필드 | 읽는 쪽 | 쓰임 |
+| 필드 | 읽는 쪽 | 쓰임 |
 | --- | --- | --- |
-| `timestamp` | `SegAdapter` / `MarkAdapter` | 신선도 판정 — 0.5초보다 낡으면 **invalid** |
+| `timestamp` | `SegAdapter` / `MarkAdapter` | 최신 여부 판정 — 기록 후 0.5초가 지난 데이터는 **invalid** 처리 |
 | `seg.{valid, lateral_offset_m, heading_error_deg}` | `RealSegModel` → `SegAdapter` | 차선 중앙 보정량 |
 | `model.detections[].{cls, conf, xyxy_px}` | `FileMarkSource` → `MarkAdapter` | 회전 트리거 판정 |
 | `pixels_per_meter`, `vehicle_axis_px`, `birdseye_size` | `MarkAdapter` | 픽셀 → 미터 환산·횡거리 게이트 |
 
-**무중단 폴백이 설계의 핵심.** 비전 프로세스가 죽으면 게시가 낡고 → 신선도 판정이
-invalid → 차선 보정은 0, 트리거는 미발화 → 주행은 GPS 단독 + 좌표 폴백으로 **계속됨**.
-비전은 주행의 전제가 아니라 가산 신호.
+비전 프로세스에 문제가 생겼을 때의 처리 순서:
+
+1. 게시 파일 갱신이 멈춤
+2. 기록 후 0.5초가 지난 데이터는 invalid 처리
+3. 차선 보정량 0, 회전 트리거 미발화
+4. 주행은 GPS 단독으로 계속, 회전은 좌표 기준으로 개시
 
 ---
 
@@ -61,10 +65,10 @@ invalid → 차선 보정은 0, 트리거는 미발화 → 주행은 GPS 단독 
 
 | 파일 | 역할 |
 | --- | --- |
-| `vision_runner/vision_runner.py` `compute_seg()` | **생산자.** 행별로 황색선 단면 + 모델 점선 상자를 모아 차량 축을 감싸는 차선 폭 쌍의 중점을 구하고, 그 점들에 직선을 적합해 offset/heading 산출. 쌍이 없는 행은 편측 추정(경계선 + 공칭 반폭)으로 보충 |
+| `vision_runner/vision_runner.py` `compute_seg()` | 쓰는 쪽. 행별로 황색선 단면 + 모델 점선 상자를 모아 차량 축을 감싸는 차선 폭 쌍의 중점을 구하고, 그 점들에 직선을 적합해 offset/heading 산출. 쌍이 없는 행은 편측 추정(경계선 + 공칭 반폭)으로 보충 |
 | `rc_car/perception/real_seg_model.py` | 게시 파일 클라이언트. `latest()` 로 최신 seg 반환 |
 | `rc_car/perception/mock_seg_model.py` | 계약 정답 seg (통합 시뮬용, 실차 무관) |
-| `rc_car/perception/seg_adapter.py` | **소비자.** 필수 4필드 검증 · 신선도 판정 · 부호 반전 · 보정 계산 및 클램프 · 연속 invalid 시 폴백 로그 |
+| `rc_car/perception/seg_adapter.py` | 읽는 쪽 경계. 필수 4필드 검증 · 최신 여부 판정 · 부호 반전 · 보정 계산 및 클램프 · 연속 invalid 시 폴백 로그 |
 | `rc_car/perception/perception_worker.py` | 10Hz 관측 스레드 (주행 50Hz 루프와 분리) |
 | `rc_car/config/perception.yaml` | 모드·게시 경로·게인·제한 |
 
@@ -87,7 +91,7 @@ seg_correction:
   heading_gain_wheel_deg_per_deg: 0.3     # 방위오차 1° 당 바퀴각 0.3°
   max_correction_wheel_deg: 8.0           # 보정 상한
   invalid_fallback_after: 3               # 연속 invalid 3회 → 폴백 로그
-  freshness_max_s: 0.5                    # 이보다 낡으면 stale = invalid
+  freshness_max_s: 0.5                    # 기록 후 이 시간이 지나면 invalid
 ```
 
 > ⚠️ **게인 이력**: 두 게인은 8/6 실주행에서 강한 좌편향(부호 반전 또는 편측 추정 계통
