@@ -21,9 +21,8 @@
 
 ## 1. 두 프로세스가 어떻게 만나는가
 
-카메라는 비전 프로세스만 열고, 주행 코드는 카메라에 직접 접근하지 않음. 비전이 인식
-결과를 tmpfs 파일에 계속 덮어쓰면, 주행 쪽이 자기 주기(10Hz)로 그 파일을 읽어감(pull).
-두 프로세스는 파일 단위로 통신.
+주행 코드는 카메라에 직접 접근하지 않고 비전이 인식 결과를 tmpfs 파일에 계속 덮어쓰면,
+주행 쪽이 자기 주기(10Hz)로 그 파일을 읽어감(pull). 주행과 비전 프로세스는 파일 단위로 통신.
 
 ```
  [카메라 CSI]
@@ -41,7 +40,7 @@
 
 게시 파일(`vision_latest.json`)의 필드와 읽는 쪽의 사용처:
 
-| 필드 | 읽는 쪽 | 쓰임 |
+| 필드 | 읽는 모듈 (주행 프로세스) | 기능 |
 | --- | --- | --- |
 | `timestamp` | `SegAdapter` / `MarkAdapter` | 최신 여부 판정 — 기록 후 0.5초가 지난 데이터는 **invalid** 처리 |
 | `seg.{valid, lateral_offset_m, heading_error_deg}` | `RealSegModel` → `SegAdapter` | 차선 중앙 보정량 |
@@ -61,16 +60,16 @@
 
 차선 중앙에서 얼마나 벗어났는지(`lateral_offset_m`)와 차선과 얼마나 틀어졌는지
 (`heading_error_deg`)를 받아 **바퀴각에 보정을 더함**. 기저 조향은 항상 GPS 경로 추종이고,
-비전은 그 위에 얹히는 제한된 보정 (명세서 §18-3: *보정값은 반드시 제한한다*).
+비전은 그 위에 얹히는 제한된 보정.
 
 | 파일 | 역할 |
 | --- | --- |
-| `vision_runner/vision_runner.py` `compute_seg()` | 쓰는 쪽. 행별로 황색선 단면 + 모델 점선 상자를 모아 차량 축을 감싸는 차선 폭 쌍의 중점을 구하고, 그 점들에 직선을 적합해 offset/heading 산출. 쌍이 없는 행은 편측 추정(경계선 + 공칭 반폭)으로 보충 |
+| `vision_runner/vision_runner.py` `compute_seg()` | 행별로 황색선 단면 + 모델 점선 상자를 모아 차량 축을 감싸는 차선 폭 쌍의 중점을 구하고, 그 점들에 직선을 적합해 offset/heading 산출. 쌍이 없는 행은 편측 추정(경계선 + 공칭 반폭)으로 보충 |
 | `rc_car/perception/real_seg_model.py` | 게시 파일 클라이언트. `latest()` 로 최신 seg 반환 |
-| `rc_car/perception/mock_seg_model.py` | 계약 정답 seg (통합 시뮬용, 실차 무관) |
-| `rc_car/perception/seg_adapter.py` | 읽는 쪽 경계. 필수 4필드 검증 · 최신 여부 판정 · 부호 반전 · 보정 계산 및 클램프 · 연속 invalid 시 폴백 로그 |
-| `rc_car/perception/perception_worker.py` | 10Hz 관측 스레드 (주행 50Hz 루프와 분리) |
-| `rc_car/config/perception.yaml` | 모드·게시 경로·게인·제한 |
+| `rc_car/perception/mock_seg_model.py` | 시뮬레이션용 대체 모델 — 실제 비전 없이 차량 위치와 차선 그래프에서 offset/heading 을 계산해 공급 (실차에서는 미사용) |
+| `rc_car/perception/seg_adapter.py` | - 4개의 필드 검증<br>- 최신 여부 판정<br>- 부호 반전<br>- 보정 계산 및 클램프<br>- 연속 invalid 시 폴백 로그 |
+| `rc_car/perception/perception_worker.py` | 10Hz 관측 스레드 |
+| `rc_car/config/perception.yaml` | 설정 파일 — seg 동작 모드(off/mock/real), 게시 파일 경로, 보정 강도(게인), 보정 상한 |
 
 보정식 (`seg_adapter.py:correction_wheel_deg`)
 
@@ -93,11 +92,6 @@ seg_correction:
   invalid_fallback_after: 3               # 연속 invalid 3회 → 폴백 로그
   freshness_max_s: 0.5                    # 기록 후 이 시간이 지나면 invalid
 ```
-
-> ⚠️ **게인 이력**: 두 게인은 8/6 실주행에서 강한 좌편향(부호 반전 또는 편측 추정 계통
-> 오차로 추정)이 나와 `0.0` 으로 무력화한 적이 있고, **8/10 시연은 보정 0 상태로 완주함.**
-> 이 제출본은 원복값(30.0 / 0.3)으로 되돌려 두었으나 **그 값의 실주행 재검증은 하지 않았음.**
-> 보정을 끄려면 두 게인을 `0.0` 으로 되돌리면 됨 — 트리거는 게인과 무관하게 계속 동작함.
 
 ---
 
@@ -213,7 +207,8 @@ control_server:
 1. **시연 당일 비전은 꺼져 있었음.** 완주 3회는 `--seg-mode off` (GPS 단독 + 좌표 폴백
    회전)로 달성. 비전 경로는 8/5~8/8 실주행에서 검증된 코드이고 이 제출본에 전부 포함돼
    있으나, **8/10 완주 기록 자체는 비전 없이 낸 것.**
-2. **차선 보정 게인은 재검증 전** (§2 경고 참조).
+2. **차선 보정 게인(30.0 / 0.3)은 실주행 재검증 전 값** — 8/6 주행에서 좌편향이 발생해
+   시연은 보정을 끈 상태로 완주. 끄려면 `perception.yaml` 의 두 게인을 `0.0` 으로 설정.
 3. **단위 테스트는 전량 통과** — 383건 수집: 382 passed, 1 skipped(Windows에 없는
    SIGHUP), 서브테스트 462. 2026-08-10 제출 원본에서는 15건이 실패했었음 — 원인은 코드
    결함이 아니라 **버전 짝**(`rc_car` 는 8/8 스냅샷, `map` 은 8/9 갱신본)으로, 실차 튜닝으로
