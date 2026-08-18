@@ -1,0 +1,10 @@
+# 애플리케이션 전역 설정
+runtime:
+  driver_mode: real          # mock | real. 🔴 배포 기본값 = real (mock 회귀 3회 — §0-43).
+                             # PC 로컬 검증은 파일을 바꾸지 말고 --driver-mode mock|sim
+  log_level: INFO            # DEBUG | INFO | WARNING
+  heartbeat_sec: 1.0         # 상태 요약 로그 주기
+
+map:
+  # 🔴 차선 그래프 단일 소스 (관제 서버와 공유 — 사본 금지). rc_car/ 기준 상대 경로.
+  graph_path: ../map/main_track_map.yaml

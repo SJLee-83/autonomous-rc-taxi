@@ -1,0 +1,107 @@
+# places.yaml — 시연 장소 표 (관제 서버가 사전 저장 → 차량에 전달)
+#
+# 지위
+#   - 관제 서버는 이 표의 stop_point 를 command.loc 으로 차량에 보낸다.
+#     (protocol_2 §9: 차량이 받는 loc 은 "이미 도로 위로 보정된 좌표")
+#   - 차량은 이 파일을 읽지 않는다. 차량의 DestinationResolver 는 안전망일 뿐이다.
+#   - main_track_map.yaml 과 짝을 이루는 데이터다. 맵을 재생성하면 이 표도 재검증해야 한다
+#     (rc_car/tests/unit/test_places.py 가 자동으로 잡는다).
+#
+# 좌표의 지위 — 잠정
+#   call_point : 승객이 서는 블록 위 지점. **실측 대상** — 실지도에서 기준 마커 Initialize 후
+#                ArUco 마커를 놓고 probe_gps.py 로 측정해 갱신한다.
+#   stop_point : 차량이 실제로 정차하는 차선 위 지점. **실측하지 않는다** —
+#                call_point 를 인접 차선에 투영하고 아래 안전 규칙을 적용해 계산한 값이다.
+#                call_point 가 실측으로 바뀌면 stop_point 도 함께 다시 계산한다.
+#
+# 안전 규칙 (2026-07-29 확정) — 정차점은 차선 조각 "끝"에서 떨어뜨린다
+#   중간 가로 도로의 차선은 점선(차선 변경) 구간에서 a/b 조각으로 끊겨 있고,
+#   그 사이 0.5m 는 차선이 아니라 이음매(connector)다. 정차점이 조각 끝에 놓이면
+#   차가 조금만 지나쳐 서도 이음매 위에 있게 되고, 도착 판정 §19-2("목표 차선에 매칭")가
+#   영원히 통과하지 못해 complete 가 나가지 않는다 (2026-07-29 재현 확인).
+#   → stop_point 는 조각 끝에서 arrival_radius_m + end_margin_m 이상 떨어뜨린다.
+#   조각 "시작" 쪽은 안전하다 — 직전 이음매의 진출 차선이 곧 목표 차선이라 게이트가 열린다.
+
+meta:
+  arrival_radius_m: 0.40      # control.yaml `control.arrival_radius_m` 와 같아야 한다
+                              #   (tests/unit/test_places.py 가 일치를 강제)
+                              # 🔴 0.30 → 0.40 (2026-08-17 리팩터링 정정 — 8/9 의 0.30 은
+                              #   폐기된 시간 기반 하드코딩 경로의 지시값. 시연 실사용
+                              #   control.yaml 은 0.40 이었으므로 그 값으로 통일)
+                              # 이력: 0.15 → 0.40 (2026-08-08, "0.40으로 통일" —
+                              #   관제서버 main_track.yaml 과 값을 맞춤) → 0.30 (2026-08-09,
+                              #   하드코딩 준비 — 시연에서 미사용) → 0.40 (위 정정).
+                              #   ⚠️ 위 §주의의 "조각 끝에서 arrival_radius_m + end_margin_m 이상"
+                              #      제약이 0.20 → 0.45 로 커진다. mid_wb1_w·mid_eb2_e 차선 끝
+                              #      0~2cm 지점이 그 제약을 못 지켜 게이트 전수 검사가 깨진다
+                              #      (tests/unit/test_arbitrary_destination.py). 알고 넘어가는 것.
+  end_margin_m: 0.05          # 그 위에 얹는 여유
+  map: main_track_map.yaml
+
+places:
+  home:
+    label: 우리집
+    block: block_nw
+    curb: west          # 🔴 north → west (2026-08-09 §0-53) — 정차 차선이 20번으로 바뀌었다.
+                        #   20번은 block_nw 서쪽 연석(x=0.52)에 붙어 있다. 승객은 서쪽에 선다.
+    call_point: [1.20, 2.40]
+    # 🔴 2026-08-09 사용자 지시 (§0-53): 우리집 정차점을 3번(top_inner_eb_w) 에서
+    #   **20번(left_inner_nb_n) 중앙**으로 옮긴다. 20번 = [0.39, 2.14]~[0.39, 2.35].
+    #   효과: 노선이 [14,19,20,3] → [14,19,20] 이 되어 `20->3` 우회전이 통째로 빠진다.
+    #     그 회전은 0808 에 착지 y 2.90 ("우리집 못 들어감") 을 냈던 구간이다.
+    #   ⚠️ 관제 서버도 같은 값을 보내야 한다 (실제 목적지 좌표는 서버가 준다) — 팀원 수정 예정.
+    #   ⚠️ 20번은 길이 0.21m 라 "조각 끝에서 반경 + 여유" 제약을 못 지킨다. 그래도 무해한
+    #     실제 근거: 도착 게이트(§19-2)는 이음매 위에서 진입·진출 차선을 함께 인정하고
+    #     (LaneMap.arrival_lane_candidates, 2026-07-30 보완) 반경 0.40 이 20번과 인접
+    #     이음매를 전부 덮는다 — 지나쳐 서도 20번 매칭이 유지된다. 시연 3회 도착 실증.
+    #     (구 주석의 `arrival.require_lane_match: false` 는 존재하지 않는 키였다 —
+    #     2026-08-17 리팩터링 정정. 차선 매칭은 빠진 적 없다: arrival_checker.py §19-2)
+    #   되돌리기: stop_point [1.20, 2.61] · stop_lane top_inner_eb_w · heading_deg 0
+    stop_point: [0.39, 2.25]
+    stop_lane: left_inner_nb_n
+    heading_deg: 90
+
+  clinic:
+    label: 보건소
+    block: block_ne
+    curb: south
+    call_point: [3.70, 2.10]    # 2026-08-04 원복: 이음매 정차 허용(차선 병합) — 블록 중앙 최적
+    stop_point: [3.70, 1.88]
+    stop_lane: mid_wb1_e
+    heading_deg: 180
+
+  senior_center:
+    label: 경로당
+    block: block_sw
+    curb: north
+    call_point: [1.20, 0.90]    # 2026-08-04 원복: 이음매 정차 허용(차선 병합) — 블록 중앙 최적
+    stop_point: [1.20, 1.12]
+    stop_lane: mid_eb2_w
+    heading_deg: 0
+
+  market:
+    label: 시장
+    block: block_se
+    curb: north
+    call_point: [3.70, 0.90]    # 2026-08-04 원복: 이음매 정차 허용(차선 병합) — 블록 중앙 최적
+    stop_point: [3.70, 1.12]
+    stop_lane: mid_eb2_e
+    heading_deg: 0
+
+  township_office:
+    label: 면사무소
+    block: block_sw
+    curb: south
+    call_point: [1.20, 0.60]
+    stop_point: [1.20, 0.39]
+    stop_lane: bot_inner_wb_w
+    heading_deg: 180
+
+  bank:
+    label: 은행
+    block: block_se
+    curb: south
+    call_point: [3.70, 0.60]
+    stop_point: [3.70, 0.39]
+    stop_lane: bot_inner_wb_e
+    heading_deg: 180

@@ -1,0 +1,27 @@
+# 실물 하드웨어 상수 — 팀 구동 코드(hardware/vendor/)의 config 브리지
+#
+# ✅ 2026-07-24 taxi/config.py(팀 실증 코드)에서 실값 확보. MOTOR_SIGN만 미확정.
+orin_car:
+  motor_i2c_address: 0x40      # ✅ taxi/config.py (주의: JetRacer 관례와 반대 — 모터가 0x40)
+  motor_channel: 0             # ✅
+  motor_sign: -1               # ✅ 2026-07-30 실차 확정 (실측 1번, 바퀴 공중 2회 확인):
+                               #    SIGN=+1의 forward()가 후진 방향 → -1로 확정. 미확정 전부 해소
+  servo_i2c_address: 0x60      # ✅ taxi/config.py (서보가 0x60)
+  servo_channel: 0             # ✅
+
+  # ⚠️ 클램프 함정 (servo_controller.py:26 — max(RIGHT, min(LEFT, angle))):
+  #    코드는 수치상 LEFT > RIGHT 를 전제. 팀 config도 실제로 LEFT=168 > RIGHT=48 로 두고
+  #    물리 방향(실측: 좌=낮은 각도)은 주행 코드의 STEER_SIGN=-1 로 보정했다.
+  #    즉 이 LEFT/RIGHT 는 물리 방향이 아니라 클램프 상한/하한이다.
+  #
+  #    값 출처: taxi/config.py (48/108/168).
+  #    ✅ 2026-07-30 실차 스윕으로 최종 확정 (실측 2번 완료):
+  #       48·168 끝단 무리 없음(소음·떨림 없음) → 팀값 48/168 채택 확정.
+  #       물리 방향 재확인: 낮은 각도=좌, 높은 각도=우. 중앙 108° 정렬 정상.
+  #       → 웹팀 application.yml steer min/max(51/165)를 48/168로 동반 수정 통보 필요
+  servo_left_angle: 168        # ✅ 클램프 상한 (물리적으로는 '우측 최대') — 실차 확정
+  servo_right_angle: 48        # ✅ 클램프 하한 (물리적으로는 '좌측 최대') — 실차 확정
+  # ✅ 2026-08-03 직진 트림 실측 (t5 --servo 스캔, throttle 1.0 × 3s, GPS 변위 방위각):
+  #    108: 좌 7.3° / 114: 좌 2.3° / 117: 0.2° → 117 확정.
+  #    물리 중립만 이동 — 보고용 중립(vehicle.yaml steering.center_deg=108, 규약 §4.4)은 불변.
+  servo_center_angle: 118      # 2026-08-04 오후 GPS 실측 확정 (횡이탈 1.5mm/0.68m, 회전 -1.6°) — 전축 수리 후에도 우측 트림 필요. 규약 보고 중립 108 불변

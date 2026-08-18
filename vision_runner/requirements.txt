@@ -1,0 +1,2 @@
+# JetPack normally supplies OpenCV. Do not replace NVIDIA's OpenCV blindly.
+numpy>=1.23

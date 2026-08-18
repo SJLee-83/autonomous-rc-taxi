@@ -1,0 +1,73 @@
+# 네트워크 설정 — protocol_2.md (v2.3) · 명세서 §26.2
+map:                           # protocol_2 §2.6 유효 좌표 범위 — pose(§3.4)·move.loc(§6.5) 검증 공용
+  x_max: 5.0
+  y_max: 3.0
+
+localization:
+  # 🔴 GPS 서버는 GPS 팀원 PC에서 운용 (본인 노트북 아님 — 2026-08-03 확인).
+  # 2026-08-03 실측: .67에서 ws(비TLS, GPS_HTTPS=0) 모드로 기동 중 — wss로 붙으면 000.
+  # IP·스킴(ws/wss)은 현장 가변 — 테스트 전 보드에서 curl로 확인 (트러블슈팅 참조)
+  # 🔴 포트 8000 → 8100 (2026-08-08). 서버 재기동 후 포트가 바뀌었다.
+  #   확인 절차(재현용): 보드에서 `</dev/tcp/<gps-server-host>/8100` 도달 확인 후,
+  #   subscribe 를 보내야 pose 가 온다 — 접속만 하고 기다리면 아무것도 안 온다.
+  #   실측 수신: {"marker_id":6,"found":true,"position":{...},"heading":358.3,...}
+  # 🔴 공개 제출본이라 실제 호스트를 플레이스홀더로 바꿔 두었다 (운용 시 채운다).
+  websocket_url: ws://<gps-server-host>:8100/ws/v1/localization
+  # 로컬 검증 시엔 wss://127.0.0.1:8000/ws/v1/localization (README "로컬 GPS 서버" 참조).
+  # tools/probe_gps.py 는 --url 로 덮어쓸 수 있어 이 줄을 건드리지 않아도 된다
+  tls_verify: false            # 위치 서버가 자체 서명 인증서 사용
+  marker_id: 6                 # 차량 구독 ID — 서버가 큐브 4면(6/7/8/9)을 융합해 6번으로
+                               # **차량 중심 좌표**를 통합 보고한다 (2026-07-31 GPS 팀 확정)
+  # 예비: 서버 통합 보고가 없어질 경우의 차량 측 4면 융합 (구현·테스트 완료, 휴면).
+  # 면 배치 실물: 전면 6 / 좌면 7 / 후면 8 / 우면 9, 면 마커 → 중심 6.8cm.
+  # 서버가 중심을 주는 현행 구성에서는 enabled=false 고정 — 켜면 이중 보정이 된다.
+  cube:
+    enabled: false
+    face_yaw_offset_deg: {6: 0.0, 7: 270.0, 8: 180.0, 9: 90.0}
+    center_offset_m: 0.068
+  # GPS 서버 좌표 → 맵 좌표 아핀 변환: p_map = a·p_server + t.
+  # 2026-07-31 실측 확정 — 차량 큐브를 프로브로 기준점 2점(대각):
+  # 2026-08-06 밤 — **GPS 맵 공간 초기화 후 정지선 4점 재적합** (축척만, 회전·전단 0 고정)
+  #   초기화 전 값들은 전부 폐기: 프레임이 20분 단위로 드리프트해 스냅샷 적합이 무의미했다
+  #   (9차 양호 → 10차 악화, 값 변경 없음).
+  #   초기화 후 실측 (서버 원좌표 vs 정답):
+  #     A 맵(1.99,2.61)↔(1.9980,2.5069)   B 맵(0.52,1.88)↔(0.5422,1.8570)
+  #     C 맵(1.66,1.12)↔(1.6716,1.0767)   D 맵(4.48,1.12)↔(4.3935,1.1118)
+  #   → 회전·전단 없이 **축척만 부족**: x 3.0% / y 4.7%.
+  #   🔴 원인: 기준 마커가 도색 경계보다 안쪽에 놓여 Initialize 됨 (x 좌우 9cm / y 상하 6cm 추정).
+  #      GPS 쪽에서 마커를 경계 꼭짓점에 정확히 맞추면 이 변환은 **항등으로 되돌려야 한다.**
+  #   파라미터 4개를 4점(식 8개)에 적합 — 잔차 최대 3.5cm (항등 시 최대 10.3cm).
+  #   재측정 절차: 자료/기준점_정지선_0806.html (차선 중앙 + 큐브 중심을 정지선 위에)
+  frame_transform:
+    a: [[1.030049, 0.0], [0.0, 1.047308]]
+    t: [-0.053476, -0.033089]
+  interval_ms: 100             # 10Hz (서버 지원 확인)
+  marker_yaw_offset_deg: 0     # 단계 2 실측 — 0/90/180/270 중 하나
+  reconnect_interval_sec: 1.0
+  pose_timeout_sec: 0.6        # 미수신 판정 (lost_hold_sec와 동일값 — 원인 무관 동일 동작)
+  lost_hold_sec: 0.6           # found=false 지속 판정
+  max_jump_m: 0.08             # 위치 점프 거부
+  max_heading_jump_deg: 15.0   # heading 점프 거부 (단계 2 노이즈 측정 후 재조정)
+
+control_server:
+  # 시연 정본 = 웹팀 Java 백엔드 (2026-07-31 확정, 워크로그 §0-26)
+  # 2026-08-03 확정: 시연 관제 PC = 본인 노트북 (관제서버/ 로컬 운용, Wi-Fi <관제PC-IP>)
+  # ⚠️ DHCP라 IP가 바뀔 수 있다 — 주행테스트 직전 ipconfig로 재확인
+  # 자체 관제 서버(control_server/, 8002)는 개발·회귀용 폴백 — integration_sim.py가 --control-url로 오버라이드
+  # 🔴 2026-08-08 — 팀원이 배포한 원격 Java 서버로 전환 (사용자 지시).
+  #   로컬 노트북(ws://<관제PC-IP>:8080/ws/vehicle)에서 옮겼다. 로컬로 되돌리려면 그 줄로.
+  #   wss + 쿼리 토큰이지만 **코드 수정은 필요 없다** — control_client 가 URL 을 그대로
+  #   websockets.connect 에 넘긴다. 보드에서 핸드셰이크·TLS 검증 통과 실측 확인함.
+  # 🔴 공개 제출본이라 실제 호스트·차량 토큰을 플레이스홀더로 바꿔 두었다.
+  #    운용 시 아래 <...> 두 곳을 실제 값으로 채운다 (토큰은 관제 서버가 차량별로 발급).
+  #    로컬 개발은 자체 관제 서버로: ws://127.0.0.1:8002/ws/vehicle
+  websocket_url: wss://<control-server-host>/ws/vehicle?token=<VEHICLE_TOKEN>
+  reconnect_interval_sec: 1.0
+  error_resend_interval_sec: 1.0
+  complete_resend_interval_sec: 1.0
+  ping_interval_sec: 1.0       # 관제 끊김 감지 (protocol_2 §2.8)
+  ping_timeout_sec: 2.0        # 최대 감지 3초 = 0.62m 주행
+
+telemetry:
+  rate_hz: 5                   # info 송신. pose 수신과 독립된 타이머 (protocol_2 §4.0)
+  speed_average_window: 5      # speed 이동평균 창 (pose 개수)

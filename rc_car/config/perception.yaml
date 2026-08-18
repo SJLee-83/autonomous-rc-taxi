@@ -1,0 +1,26 @@
+# 인지(seg 조향) 설정 — seg 계약 v0.3 기준 (카메라는 vision 소유, latest() pull)
+perception:
+  # off  = seg 미사용 (GPS 폴백 조향만 — Phase 1 기본)
+  # mock = 계약 §8 정답 seg (pose·차선 그래프에서 §5 값 계산 — 통합 시뮬용)
+  # real = vision 실행체 게시 파일 클라이언트 (RealSegModel — vision_runner 가동 전제,
+  #        미가동이면 load 예외로 기동 거부. V1: seg 미계산이라 invalid=GPS 폴백 상시)
+  seg_mode: "real"     # 🔴 배포 기본값 = real (보드 vision_runner 기동 전제 — 미가동 시 기동 거부).
+                       # vision 게시가 없는 PC는 파일을 바꾸지 말고 --seg-mode off|mock
+  rate_hz: 10          # 계약 §3.2 목표 주기. 실측(계약 §7) 후 조정
+  publish_path: "/dev/shm/vision_latest.json"   # vision_runner 게시 위치 (tmpfs)
+  vehicle_axis_px: null   # 회전 트리거 횡거리 게이트의 기준 열. null = 게시값(vehicle_axis_px)
+                          # → 없으면 버드아이 폭의 절반. 현 보정은 954px 폭에 축 477px(정확히 절반)
+
+# 차선 중앙 보정 (명세서 §18-3: 최종 조향 = 경로 추종 + 보정, 보정은 반드시 제한)
+# 계약 §5 부호(+ = 좌측 보정 필요) → 바퀴각(+우) 반전은 SegAdapter 책임
+seg_correction:
+  # 이력 — 2026-08-06 저녁 0.0 으로 무력화한 적이 있다: 편측 폴백으로 seg 가동률이 오르자
+  #   직선마다 강한 좌편향(픽업 4번에서 정지선이 축 우측 0.6m [게이트 밖] /
+  #   목적 19번에서 x 0.39->0.0 서쪽 끝 주행). 부호 반전 또는 편측 추정 계통 오차로 추정.
+  #   ⚠️ 8/10 시연은 보정 0 + `--seg-mode off` 로 완주했다 — 아래 값은 실주행 재검증 전이다.
+  #   보정을 끄려면 두 게인을 0.0 으로 되돌린다 (트리거는 게인과 무관하게 계속 동작).
+  offset_gain_wheel_deg_per_m: 30.0     # 횡오프셋 1m 당 바퀴각 30° (max_correction 에서 클램프)
+  heading_gain_wheel_deg_per_deg: 0.3   # 방위오차 1° 당 바퀴각 0.3°
+  max_correction_wheel_deg: 8.0         # §18-3 보정 제한
+  invalid_fallback_after: 3             # 연속 invalid 이 횟수 → 폴백 전환 로그 (§6.2)
+  freshness_max_s: 0.5                  # v0.3 §5: timestamp 이보다 오래되면 stale=invalid (잠정)

@@ -1,0 +1,1630 @@
+# main_track_map.yaml — 시연지도 차선 그래프 (단일 소스)
+#
+# 🔴 이 파일은 차량(rc_car)과 관제 서버가 공유하는 유일한 맵 데이터다. 사본 금지.
+# 생성: rc_car/tools/build_demo_map.py (직접 수정하지 말고 생성기를 고쳐 재생성)
+# 근거: 자료/자율주행무인택시_시연지도최종안.png 픽셀 판독 (±2cm 추정 오차, 실측 대기)
+#
+# 두 순환계와 다리 (2026-07-28 결정):
+#   화살표+가까운 차선 진입 규칙만으로는 inner 16 / outer 16 차선이 완전 분리된다.
+#   두 순환계를 잇는 다리는 두 종류다:
+#   ① (2026-08-04 폐지) 점선 구간 차선 변경 — 짧은 이음매에서 대각 기동이
+#      인도 침입을 유발해 제거. 이음매는 병합 차선에 흡수(정차 가능)
+#   ② 회전 진입 차선 선택(_far) 16개 — 2차로 도로로 회전 시 먼 차선으로도 진입
+#   → 전체 32차선 강연결: 목적지는 destination_allowed 차선이면 어디든 가능.
+#   → 다리를 전부 지우면 다시 분리된다 — 로더·테스트가 강연결을 검증한다.
+#
+# 확장(명세서 §11.2에 없는 것): lanes.*.circuit(링 계열 참고용), connectors.*.radius_m
+
+map:
+  id: main_track
+  width_m: 5.0
+  height_m: 3.0
+  origin: bottom_left
+  image: 자료/자율주행무인택시_시연지도최종안.png
+
+vehicle_rules:
+  lane_change_enabled: false
+  reverse_enabled: false
+
+lanes:
+  top_outer_wb_e:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 180
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [4.51, 2.86]
+      - [3.01, 2.86]
+    successors:
+      - tee_n_wb_straight
+      - tee_n_wb_left
+      - tee_n_wb_left_far
+  top_outer_wb_w:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 180
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [1.99, 2.86]
+      - [0.49, 2.86]
+    successors:
+      - corner_nw_outer
+  left_outer_sb_n:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 270
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [0.14, 2.51]
+      - [0.14, 2.01]
+    successors:
+      - tee_w_sb_straight
+      - tee_w_sb_left
+      - tee_w_sb_left_far
+  left_outer_sb_s:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 270
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [0.14, 0.99]
+      - [0.14, 0.49]
+    successors:
+      - corner_sw_outer
+  bot_outer_eb_w:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 0
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [0.49, 0.14]
+      - [1.99, 0.14]
+    successors:
+      - tee_s_eb_straight
+      - tee_s_eb_left
+      - tee_s_eb_left_far
+  bot_outer_eb_e:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 0
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [3.01, 0.14]
+      - [4.51, 0.14]
+    successors:
+      - corner_se_outer
+  right_outer_nb_s:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 90
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [4.86, 0.49]
+      - [4.86, 0.99]
+    successors:
+      - tee_e_nb_straight
+      - tee_e_nb_left
+      - tee_e_nb_left_far
+  right_outer_nb_n:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 90
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [4.86, 2.01]
+      - [4.86, 2.51]
+    successors:
+      - corner_ne_outer
+  top_inner_eb_w:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 0
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [0.65, 2.61]
+      - [1.86, 2.61]
+    successors:
+      - tee_n_eb_straight
+      - tee_n_eb_right
+      - tee_n_eb_right_far
+  top_inner_eb_e:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 0
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [3.14, 2.61]
+      - [4.35, 2.61]
+    successors:
+      - corner_ne_inner
+  right_inner_sb_n:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 270
+    speed_limit_mps: 0.25
+    destination_allowed: false
+    circuit: inner
+    centerline:
+      - [4.61, 2.35]
+      - [4.61, 2.14]
+    successors:
+      - tee_e_sb_straight
+      - tee_e_sb_right
+      - tee_e_sb_right_far
+  right_inner_sb_s:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 270
+    speed_limit_mps: 0.25
+    destination_allowed: false
+    circuit: inner
+    centerline:
+      - [4.61, 0.86]
+      - [4.61, 0.65]
+    successors:
+      - corner_se_inner
+  bot_inner_wb_e:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 180
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [4.35, 0.39]
+      - [3.14, 0.39]
+    successors:
+      - tee_s_wb_straight
+      - tee_s_wb_right
+      - tee_s_wb_right_far
+  bot_inner_wb_w:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 180
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [1.86, 0.39]
+      - [0.65, 0.39]
+    successors:
+      - corner_sw_inner
+  left_inner_nb_s:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 90
+    speed_limit_mps: 0.25
+    destination_allowed: false
+    circuit: inner
+    centerline:
+      - [0.39, 0.65]
+      - [0.39, 0.86]
+    successors:
+      - tee_w_nb_straight
+      - tee_w_nb_right
+      - tee_w_nb_right_far
+  left_inner_nb_n:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 90
+    speed_limit_mps: 0.25
+    # 🔴 false → true (2026-08-09 사용자 지시 — §0-53). 우리집 정차점을 이 차선(20번)
+    #   중앙 [0.39, 2.25] 으로 옮겼다. DestinationResolver 는 destination_allowed 인
+    #   차선만 후보로 보므로(destination_resolver.py:33) 이걸 안 켜면 다른 차선으로 스냅된다.
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [0.39, 2.14]
+      - [0.39, 2.35]
+    successors:
+      - corner_nw_inner
+  mid_wb1_e:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 180
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [4.35, 1.88]
+      - [3.14, 1.88]
+    successors:
+      - ix_wb1_straight
+      - ix_wb1_right
+      - ix_wb1_right_far
+  mid_wb1_w:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 180
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [1.86, 1.88]
+      - [0.65, 1.88]
+    successors:
+      - tee_w_wb1_right
+  mid_wb2_e:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 180
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [4.35, 1.63]
+      - [3.01, 1.63]
+    successors:
+      - ix_wb2_straight
+      - ix_wb2_left
+      - ix_wb2_left_far
+  mid_wb2_w:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 180
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [1.86, 1.63]
+      - [0.52, 1.63]
+    successors:
+      - tee_w_wb2_left
+  mid_eb1_w:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 0
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [0.65, 1.37]
+      - [1.99, 1.37]
+    successors:
+      - ix_eb1_straight
+      - ix_eb1_left
+      - ix_eb1_left_far
+  mid_eb1_e:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 0
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [3.14, 1.37]
+      - [4.48, 1.37]
+    successors:
+      - tee_e_eb1_left
+  mid_eb2_w:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 0
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [0.65, 1.12]
+      - [1.86, 1.12]
+    successors:
+      - ix_eb2_straight
+      - ix_eb2_right
+      - ix_eb2_right_far
+  mid_eb2_e:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 0
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: inner
+    centerline:
+      - [3.14, 1.12]
+      - [4.35, 1.12]
+    successors:
+      - tee_e_eb2_right
+  vert_sb1_n:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 270
+    speed_limit_mps: 0.25
+    destination_allowed: false
+    circuit: inner
+    centerline:
+      - [2.12, 2.35]
+      - [2.12, 2.14]
+    successors:
+      - ix_sb1_straight
+      - ix_sb1_right
+      - ix_sb1_right_far
+  vert_sb1_s:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 270
+    speed_limit_mps: 0.25
+    destination_allowed: false
+    circuit: inner
+    centerline:
+      - [2.12, 0.86]
+      - [2.12, 0.65]
+    successors:
+      - tee_s_sb1_right
+  vert_sb2_n:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 270
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [2.37, 2.35]
+      - [2.37, 2.01]
+    successors:
+      - ix_sb2_straight
+      - ix_sb2_left
+      - ix_sb2_left_far
+  vert_sb2_s:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 270
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [2.37, 0.86]
+      - [2.37, 0.52]
+    successors:
+      - tee_s_sb2_left
+  vert_nb1_s:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 90
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [2.63, 0.65]
+      - [2.63, 0.99]
+    successors:
+      - ix_nb1_straight
+      - ix_nb1_left
+      - ix_nb1_left_far
+  vert_nb1_n:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 90
+    speed_limit_mps: 0.25
+    destination_allowed: true
+    circuit: outer
+    centerline:
+      - [2.63, 2.14]
+      - [2.63, 2.48]
+    successors:
+      - tee_n_nb1_left
+  vert_nb2_s:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 90
+    speed_limit_mps: 0.25
+    destination_allowed: false
+    circuit: inner
+    centerline:
+      - [2.88, 0.65]
+      - [2.88, 0.86]
+    successors:
+      - ix_nb2_straight
+      - ix_nb2_right
+      - ix_nb2_right_far
+  vert_nb2_n:
+    kind: lane
+    width_m: 0.25
+    heading_hint_deg: 90
+    speed_limit_mps: 0.25
+    destination_allowed: false
+    circuit: inner
+    centerline:
+      - [2.88, 2.14]
+      - [2.88, 2.35]
+    successors:
+      - tee_n_nb2_right
+
+connectors:
+  corner_nw_outer:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [0.49, 2.86]
+      - [0.4292, 2.8547]
+      - [0.3703, 2.8389]
+      - [0.315, 2.8131]
+      - [0.265, 2.7781]
+      - [0.2219, 2.735]
+      - [0.1869, 2.685]
+      - [0.1611, 2.6297]
+      - [0.1453, 2.5708]
+      - [0.14, 2.51]
+    successor: left_outer_sb_n
+  corner_sw_outer:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [0.14, 0.49]
+      - [0.1453, 0.4292]
+      - [0.1611, 0.3703]
+      - [0.1869, 0.315]
+      - [0.2219, 0.265]
+      - [0.265, 0.2219]
+      - [0.315, 0.1869]
+      - [0.3703, 0.1611]
+      - [0.4292, 0.1453]
+      - [0.49, 0.14]
+    successor: bot_outer_eb_w
+  corner_se_outer:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [4.51, 0.14]
+      - [4.5708, 0.1453]
+      - [4.6297, 0.1611]
+      - [4.685, 0.1869]
+      - [4.735, 0.2219]
+      - [4.7781, 0.265]
+      - [4.8131, 0.315]
+      - [4.8389, 0.3703]
+      - [4.8547, 0.4292]
+      - [4.86, 0.49]
+    successor: right_outer_nb_s
+  corner_ne_outer:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [4.86, 2.51]
+      - [4.8547, 2.5708]
+      - [4.8389, 2.6297]
+      - [4.8131, 2.685]
+      - [4.7781, 2.735]
+      - [4.735, 2.7781]
+      - [4.685, 2.8131]
+      - [4.6297, 2.8389]
+      - [4.5708, 2.8547]
+      - [4.51, 2.86]
+    successor: top_outer_wb_e
+  corner_nw_inner:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [0.39, 2.35]
+      - [0.3939, 2.3951]
+      - [0.4057, 2.4389]
+      - [0.4248, 2.48]
+      - [0.4508, 2.5171]
+      - [0.4829, 2.5492]
+      - [0.52, 2.5752]
+      - [0.5611, 2.5943]
+      - [0.6049, 2.6061]
+      - [0.65, 2.61]
+    successor: top_inner_eb_w
+  corner_ne_inner:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [4.35, 2.61]
+      - [4.3951, 2.6061]
+      - [4.4389, 2.5943]
+      - [4.48, 2.5752]
+      - [4.5171, 2.5492]
+      - [4.5492, 2.5171]
+      - [4.5752, 2.48]
+      - [4.5943, 2.4389]
+      - [4.6061, 2.3951]
+      - [4.61, 2.35]
+    successor: right_inner_sb_n
+  corner_se_inner:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [4.61, 0.65]
+      - [4.6061, 0.6049]
+      - [4.5943, 0.5611]
+      - [4.5752, 0.52]
+      - [4.5492, 0.4829]
+      - [4.5171, 0.4508]
+      - [4.48, 0.4248]
+      - [4.4389, 0.4057]
+      - [4.3951, 0.3939]
+      - [4.35, 0.39]
+    successor: bot_inner_wb_e
+  corner_sw_inner:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [0.65, 0.39]
+      - [0.6049, 0.3939]
+      - [0.5611, 0.4057]
+      - [0.52, 0.4248]
+      - [0.4829, 0.4508]
+      - [0.4508, 0.4829]
+      - [0.4248, 0.52]
+      - [0.4057, 0.5611]
+      - [0.3939, 0.6049]
+      - [0.39, 0.65]
+    successor: left_inner_nb_s
+  ix_sb1_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [2.12, 2.14]
+      - [2.12, 0.86]
+    successor: vert_sb1_s
+  ix_sb1_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [2.12, 2.14]
+      - [2.1161, 2.0949]
+      - [2.1043, 2.0511]
+      - [2.0852, 2.01]
+      - [2.0592, 1.9729]
+      - [2.0271, 1.9408]
+      - [1.99, 1.9148]
+      - [1.9489, 1.8957]
+      - [1.9051, 1.8839]
+      - [1.86, 1.88]
+    successor: mid_wb1_w
+  ix_sb2_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [2.37, 2.01]
+      - [2.37, 0.86]
+    successor: vert_sb2_s
+  ix_sb2_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [2.37, 2.01]
+      - [2.37, 1.72]
+      - [2.3753, 1.6592]
+      - [2.3911, 1.6003]
+      - [2.4169, 1.545]
+      - [2.4519, 1.495]
+      - [2.495, 1.4519]
+      - [2.545, 1.4169]
+      - [2.6003, 1.3911]
+      - [2.6592, 1.3753]
+      - [2.72, 1.37]
+      - [3.14, 1.37]
+    successor: mid_eb1_e
+  ix_nb1_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [2.63, 0.99]
+      - [2.63, 2.14]
+    successor: vert_nb1_n
+  ix_nb1_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [2.63, 0.99]
+      - [2.63, 1.28]
+      - [2.6247, 1.3408]
+      - [2.6089, 1.3997]
+      - [2.5831, 1.455]
+      - [2.5481, 1.505]
+      - [2.505, 1.5481]
+      - [2.455, 1.5831]
+      - [2.3997, 1.6089]
+      - [2.3408, 1.6247]
+      - [2.28, 1.63]
+      - [1.86, 1.63]
+    successor: mid_wb2_w
+  ix_nb2_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [2.88, 0.86]
+      - [2.88, 2.14]
+    successor: vert_nb2_n
+  ix_nb2_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [2.88, 0.86]
+      - [2.8839, 0.9051]
+      - [2.8957, 0.9489]
+      - [2.9148, 0.99]
+      - [2.9408, 1.0271]
+      - [2.9729, 1.0592]
+      - [3.01, 1.0852]
+      - [3.0511, 1.1043]
+      - [3.0949, 1.1161]
+      - [3.14, 1.12]
+    successor: mid_eb2_e
+  ix_wb1_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [3.14, 1.88]
+      - [1.86, 1.88]
+    successor: mid_wb1_w
+  ix_wb1_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [3.14, 1.88]
+      - [3.0949, 1.8839]
+      - [3.0511, 1.8957]
+      - [3.01, 1.9148]
+      - [2.9729, 1.9408]
+      - [2.9408, 1.9729]
+      - [2.9148, 2.01]
+      - [2.8957, 2.0511]
+      - [2.8839, 2.0949]
+      - [2.88, 2.14]
+    successor: vert_nb2_n
+  ix_wb2_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [3.01, 1.63]
+      - [1.86, 1.63]
+    successor: mid_wb2_w
+  ix_wb2_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [3.01, 1.63]
+      - [2.72, 1.63]
+      - [2.6592, 1.6247]
+      - [2.6003, 1.6089]
+      - [2.545, 1.5831]
+      - [2.495, 1.5481]
+      - [2.4519, 1.505]
+      - [2.4169, 1.455]
+      - [2.3911, 1.3997]
+      - [2.3753, 1.3408]
+      - [2.37, 1.28]
+      - [2.37, 0.86]
+    successor: vert_sb2_s
+  ix_eb1_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [1.99, 1.37]
+      - [3.14, 1.37]
+    successor: mid_eb1_e
+  ix_eb1_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [1.99, 1.37]
+      - [2.28, 1.37]
+      - [2.3408, 1.3753]
+      - [2.3997, 1.3911]
+      - [2.455, 1.4169]
+      - [2.505, 1.4519]
+      - [2.5481, 1.495]
+      - [2.5831, 1.545]
+      - [2.6089, 1.6003]
+      - [2.6247, 1.6592]
+      - [2.63, 1.72]
+      - [2.63, 2.14]
+    successor: vert_nb1_n
+  ix_eb2_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [1.86, 1.12]
+      - [3.14, 1.12]
+    successor: mid_eb2_e
+  ix_eb2_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [1.86, 1.12]
+      - [1.9051, 1.1161]
+      - [1.9489, 1.1043]
+      - [1.99, 1.0852]
+      - [2.0271, 1.0592]
+      - [2.0592, 1.0271]
+      - [2.0852, 0.99]
+      - [2.1043, 0.9489]
+      - [2.1161, 0.9051]
+      - [2.12, 0.86]
+    successor: vert_sb1_s
+  tee_n_eb_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [1.86, 2.61]
+      - [3.14, 2.61]
+    successor: top_inner_eb_e
+  tee_n_eb_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [1.86, 2.61]
+      - [1.9051, 2.6061]
+      - [1.9489, 2.5943]
+      - [1.99, 2.5752]
+      - [2.0271, 2.5492]
+      - [2.0592, 2.5171]
+      - [2.0852, 2.48]
+      - [2.1043, 2.4389]
+      - [2.1161, 2.3951]
+      - [2.12, 2.35]
+    successor: vert_sb1_n
+  tee_n_wb_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [3.01, 2.86]
+      - [1.99, 2.86]
+    successor: top_outer_wb_w
+  tee_n_wb_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [3.01, 2.86]
+      - [2.72, 2.86]
+      - [2.6592, 2.8547]
+      - [2.6003, 2.8389]
+      - [2.545, 2.8131]
+      - [2.495, 2.7781]
+      - [2.4519, 2.735]
+      - [2.4169, 2.685]
+      - [2.3911, 2.6297]
+      - [2.3753, 2.5708]
+      - [2.37, 2.51]
+      - [2.37, 2.35]
+    successor: vert_sb2_n
+  tee_n_nb1_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [2.63, 2.48]
+      - [2.63, 2.51]
+      - [2.6247, 2.5708]
+      - [2.6089, 2.6297]
+      - [2.5831, 2.685]
+      - [2.5481, 2.735]
+      - [2.505, 2.7781]
+      - [2.455, 2.8131]
+      - [2.3997, 2.8389]
+      - [2.3408, 2.8547]
+      - [2.28, 2.86]
+      - [1.99, 2.86]
+    successor: top_outer_wb_w
+  tee_n_nb2_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [2.88, 2.35]
+      - [2.8839, 2.3951]
+      - [2.8957, 2.4389]
+      - [2.9148, 2.48]
+      - [2.9408, 2.5171]
+      - [2.9729, 2.5492]
+      - [3.01, 2.5752]
+      - [3.0511, 2.5943]
+      - [3.0949, 2.6061]
+      - [3.14, 2.61]
+    successor: top_inner_eb_e
+  tee_s_wb_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [3.14, 0.39]
+      - [1.86, 0.39]
+    successor: bot_inner_wb_w
+  tee_s_wb_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [3.14, 0.39]
+      - [3.0949, 0.3939]
+      - [3.0511, 0.4057]
+      - [3.01, 0.4248]
+      - [2.9729, 0.4508]
+      - [2.9408, 0.4829]
+      - [2.9148, 0.52]
+      - [2.8957, 0.5611]
+      - [2.8839, 0.6049]
+      - [2.88, 0.65]
+    successor: vert_nb2_s
+  tee_s_eb_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [1.99, 0.14]
+      - [3.01, 0.14]
+    successor: bot_outer_eb_e
+  tee_s_eb_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [1.99, 0.14]
+      - [2.28, 0.14]
+      - [2.3408, 0.1453]
+      - [2.3997, 0.1611]
+      - [2.455, 0.1869]
+      - [2.505, 0.2219]
+      - [2.5481, 0.265]
+      - [2.5831, 0.315]
+      - [2.6089, 0.3703]
+      - [2.6247, 0.4292]
+      - [2.63, 0.49]
+      - [2.63, 0.65]
+    successor: vert_nb1_s
+  tee_s_sb1_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [2.12, 0.65]
+      - [2.1161, 0.6049]
+      - [2.1043, 0.5611]
+      - [2.0852, 0.52]
+      - [2.0592, 0.4829]
+      - [2.0271, 0.4508]
+      - [1.99, 0.4248]
+      - [1.9489, 0.4057]
+      - [1.9051, 0.3939]
+      - [1.86, 0.39]
+    successor: bot_inner_wb_w
+  tee_s_sb2_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [2.37, 0.52]
+      - [2.37, 0.49]
+      - [2.3753, 0.4292]
+      - [2.3911, 0.3703]
+      - [2.4169, 0.315]
+      - [2.4519, 0.265]
+      - [2.495, 0.2219]
+      - [2.545, 0.1869]
+      - [2.6003, 0.1611]
+      - [2.6592, 0.1453]
+      - [2.72, 0.14]
+      - [3.01, 0.14]
+    successor: bot_outer_eb_e
+  tee_w_sb_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [0.14, 2.01]
+      - [0.14, 0.99]
+    successor: left_outer_sb_s
+  tee_w_sb_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [0.14, 2.01]
+      - [0.14, 1.72]
+      - [0.1453, 1.6592]
+      - [0.1611, 1.6003]
+      - [0.1869, 1.545]
+      - [0.2219, 1.495]
+      - [0.265, 1.4519]
+      - [0.315, 1.4169]
+      - [0.3703, 1.3911]
+      - [0.4292, 1.3753]
+      - [0.49, 1.37]
+      - [0.65, 1.37]
+    successor: mid_eb1_w
+  tee_w_nb_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [0.39, 0.86]
+      - [0.39, 2.14]
+    successor: left_inner_nb_n
+  tee_w_nb_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [0.39, 0.86]
+      - [0.3939, 0.9051]
+      - [0.4057, 0.9489]
+      - [0.4248, 0.99]
+      - [0.4508, 1.0271]
+      - [0.4829, 1.0592]
+      - [0.52, 1.0852]
+      - [0.5611, 1.1043]
+      - [0.6049, 1.1161]
+      - [0.65, 1.12]
+    successor: mid_eb2_w
+  tee_w_wb1_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [0.65, 1.88]
+      - [0.6049, 1.8839]
+      - [0.5611, 1.8957]
+      - [0.52, 1.9148]
+      - [0.4829, 1.9408]
+      - [0.4508, 1.9729]
+      - [0.4248, 2.01]
+      - [0.4057, 2.0511]
+      - [0.3939, 2.0949]
+      - [0.39, 2.14]
+    successor: left_inner_nb_n
+  tee_w_wb2_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [0.52, 1.63]
+      - [0.49, 1.63]
+      - [0.4292, 1.6247]
+      - [0.3703, 1.6089]
+      - [0.315, 1.5831]
+      - [0.265, 1.5481]
+      - [0.2219, 1.505]
+      - [0.1869, 1.455]
+      - [0.1611, 1.3997]
+      - [0.1453, 1.3408]
+      - [0.14, 1.28]
+      - [0.14, 0.99]
+    successor: left_outer_sb_s
+  tee_e_sb_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [4.61, 2.14]
+      - [4.61, 0.86]
+    successor: right_inner_sb_s
+  tee_e_sb_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [4.61, 2.14]
+      - [4.6061, 2.0949]
+      - [4.5943, 2.0511]
+      - [4.5752, 2.01]
+      - [4.5492, 1.9729]
+      - [4.5171, 1.9408]
+      - [4.48, 1.9148]
+      - [4.4389, 1.8957]
+      - [4.3951, 1.8839]
+      - [4.35, 1.88]
+    successor: mid_wb1_e
+  tee_e_nb_straight:
+    kind: connector
+    maneuver: straight
+    speed_limit_mps: 0.2
+    centerline:
+      - [4.86, 0.99]
+      - [4.86, 2.01]
+    successor: right_outer_nb_n
+  tee_e_nb_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [4.86, 0.99]
+      - [4.86, 1.28]
+      - [4.8547, 1.3408]
+      - [4.8389, 1.3997]
+      - [4.8131, 1.455]
+      - [4.7781, 1.505]
+      - [4.735, 1.5481]
+      - [4.685, 1.5831]
+      - [4.6297, 1.6089]
+      - [4.5708, 1.6247]
+      - [4.51, 1.63]
+      - [4.35, 1.63]
+    successor: mid_wb2_e
+  tee_e_eb1_left:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [4.48, 1.37]
+      - [4.51, 1.37]
+      - [4.5708, 1.3753]
+      - [4.6297, 1.3911]
+      - [4.685, 1.4169]
+      - [4.735, 1.4519]
+      - [4.7781, 1.495]
+      - [4.8131, 1.545]
+      - [4.8389, 1.6003]
+      - [4.8547, 1.6592]
+      - [4.86, 1.72]
+      - [4.86, 2.01]
+    successor: right_outer_nb_n
+  tee_e_eb2_right:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [4.35, 1.12]
+      - [4.3951, 1.1161]
+      - [4.4389, 1.1043]
+      - [4.48, 1.0852]
+      - [4.5171, 1.0592]
+      - [4.5492, 1.0271]
+      - [4.5752, 0.99]
+      - [4.5943, 0.9489]
+      - [4.6061, 0.9051]
+      - [4.61, 0.86]
+    successor: right_inner_sb_s
+  ix_sb1_right_far:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [2.12, 2.14]
+      - [2.12, 1.89]
+      - [2.1161, 1.8449]
+      - [2.1043, 1.8011]
+      - [2.0852, 1.76]
+      - [2.0592, 1.7229]
+      - [2.0271, 1.6908]
+      - [1.99, 1.6648]
+      - [1.9489, 1.6457]
+      - [1.9051, 1.6339]
+      - [1.86, 1.63]
+    successor: mid_wb2_w
+  ix_sb2_left_far:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [2.37, 2.01]
+      - [2.37, 1.47]
+      - [2.3753, 1.4092]
+      - [2.3911, 1.3503]
+      - [2.4169, 1.295]
+      - [2.4519, 1.245]
+      - [2.495, 1.2019]
+      - [2.545, 1.1669]
+      - [2.6003, 1.1411]
+      - [2.6592, 1.1253]
+      - [2.72, 1.12]
+      - [3.14, 1.12]
+    successor: mid_eb2_e
+  ix_nb1_left_far:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [2.63, 0.99]
+      - [2.63, 1.53]
+      - [2.6247, 1.5908]
+      - [2.6089, 1.6497]
+      - [2.5831, 1.705]
+      - [2.5481, 1.755]
+      - [2.505, 1.7981]
+      - [2.455, 1.8331]
+      - [2.3997, 1.8589]
+      - [2.3408, 1.8747]
+      - [2.28, 1.88]
+      - [1.86, 1.88]
+    successor: mid_wb1_w
+  ix_nb2_right_far:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [2.88, 0.86]
+      - [2.88, 1.11]
+      - [2.8839, 1.1551]
+      - [2.8957, 1.1989]
+      - [2.9148, 1.24]
+      - [2.9408, 1.2771]
+      - [2.9729, 1.3092]
+      - [3.01, 1.3352]
+      - [3.0511, 1.3543]
+      - [3.0949, 1.3661]
+      - [3.14, 1.37]
+    successor: mid_eb1_e
+  ix_wb1_right_far:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [3.14, 1.88]
+      - [2.89, 1.88]
+      - [2.8449, 1.8839]
+      - [2.8011, 1.8957]
+      - [2.76, 1.9148]
+      - [2.7229, 1.9408]
+      - [2.6908, 1.9729]
+      - [2.6648, 2.01]
+      - [2.6457, 2.0511]
+      - [2.6339, 2.0949]
+      - [2.63, 2.14]
+    successor: vert_nb1_n
+  ix_wb2_left_far:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [3.01, 1.63]
+      - [2.47, 1.63]
+      - [2.4092, 1.6247]
+      - [2.3503, 1.6089]
+      - [2.295, 1.5831]
+      - [2.245, 1.5481]
+      - [2.2019, 1.505]
+      - [2.1669, 1.455]
+      - [2.1411, 1.3997]
+      - [2.1253, 1.3408]
+      - [2.12, 1.28]
+      - [2.12, 0.86]
+    successor: vert_sb1_s
+  ix_eb1_left_far:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [1.99, 1.37]
+      - [2.53, 1.37]
+      - [2.5908, 1.3753]
+      - [2.6497, 1.3911]
+      - [2.705, 1.4169]
+      - [2.755, 1.4519]
+      - [2.7981, 1.495]
+      - [2.8331, 1.545]
+      - [2.8589, 1.6003]
+      - [2.8747, 1.6592]
+      - [2.88, 1.72]
+      - [2.88, 2.14]
+    successor: vert_nb2_n
+  ix_eb2_right_far:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [1.86, 1.12]
+      - [2.11, 1.12]
+      - [2.1551, 1.1161]
+      - [2.1989, 1.1043]
+      - [2.24, 1.0852]
+      - [2.2771, 1.0592]
+      - [2.3092, 1.0271]
+      - [2.3352, 0.99]
+      - [2.3543, 0.9489]
+      - [2.3661, 0.9051]
+      - [2.37, 0.86]
+    successor: vert_sb2_s
+  tee_n_eb_right_far:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [1.86, 2.61]
+      - [2.11, 2.61]
+      - [2.1551, 2.6061]
+      - [2.1989, 2.5943]
+      - [2.24, 2.5752]
+      - [2.2771, 2.5492]
+      - [2.3092, 2.5171]
+      - [2.3352, 2.48]
+      - [2.3543, 2.4389]
+      - [2.3661, 2.3951]
+      - [2.37, 2.35]
+    successor: vert_sb2_n
+  tee_n_wb_left_far:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [3.01, 2.86]
+      - [2.47, 2.86]
+      - [2.4092, 2.8547]
+      - [2.3503, 2.8389]
+      - [2.295, 2.8131]
+      - [2.245, 2.7781]
+      - [2.2019, 2.735]
+      - [2.1669, 2.685]
+      - [2.1411, 2.6297]
+      - [2.1253, 2.5708]
+      - [2.12, 2.51]
+      - [2.12, 2.35]
+    successor: vert_sb1_n
+  tee_s_wb_right_far:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [3.14, 0.39]
+      - [2.89, 0.39]
+      - [2.8449, 0.3939]
+      - [2.8011, 0.4057]
+      - [2.76, 0.4248]
+      - [2.7229, 0.4508]
+      - [2.6908, 0.4829]
+      - [2.6648, 0.52]
+      - [2.6457, 0.5611]
+      - [2.6339, 0.6049]
+      - [2.63, 0.65]
+    successor: vert_nb1_s
+  tee_s_eb_left_far:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [1.99, 0.14]
+      - [2.53, 0.14]
+      - [2.5908, 0.1453]
+      - [2.6497, 0.1611]
+      - [2.705, 0.1869]
+      - [2.755, 0.2219]
+      - [2.7981, 0.265]
+      - [2.8331, 0.315]
+      - [2.8589, 0.3703]
+      - [2.8747, 0.4292]
+      - [2.88, 0.49]
+      - [2.88, 0.65]
+    successor: vert_nb2_s
+  tee_w_sb_left_far:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [0.14, 2.01]
+      - [0.14, 1.47]
+      - [0.1453, 1.4092]
+      - [0.1611, 1.3503]
+      - [0.1869, 1.295]
+      - [0.2219, 1.245]
+      - [0.265, 1.2019]
+      - [0.315, 1.1669]
+      - [0.3703, 1.1411]
+      - [0.4292, 1.1253]
+      - [0.49, 1.12]
+      - [0.65, 1.12]
+    successor: mid_eb2_w
+  tee_w_nb_right_far:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [0.39, 0.86]
+      - [0.39, 1.11]
+      - [0.3939, 1.1551]
+      - [0.4057, 1.1989]
+      - [0.4248, 1.24]
+      - [0.4508, 1.2771]
+      - [0.4829, 1.3092]
+      - [0.52, 1.3352]
+      - [0.5611, 1.3543]
+      - [0.6049, 1.3661]
+      - [0.65, 1.37]
+    successor: mid_eb1_w
+  tee_e_sb_right_far:
+    kind: connector
+    maneuver: right
+    speed_limit_mps: 0.2
+    radius_m: 0.26
+    centerline:
+      - [4.61, 2.14]
+      - [4.61, 1.89]
+      - [4.6061, 1.8449]
+      - [4.5943, 1.8011]
+      - [4.5752, 1.76]
+      - [4.5492, 1.7229]
+      - [4.5171, 1.6908]
+      - [4.48, 1.6648]
+      - [4.4389, 1.6457]
+      - [4.3951, 1.6339]
+      - [4.35, 1.63]
+    successor: mid_wb2_e
+  tee_e_nb_left_far:
+    kind: connector
+    maneuver: left
+    speed_limit_mps: 0.2
+    radius_m: 0.35
+    centerline:
+      - [4.86, 0.99]
+      - [4.86, 1.53]
+      - [4.8547, 1.5908]
+      - [4.8389, 1.6497]
+      - [4.8131, 1.705]
+      - [4.7781, 1.755]
+      - [4.735, 1.7981]
+      - [4.685, 1.8331]
+      - [4.6297, 1.8589]
+      - [4.5708, 1.8747]
+      - [4.51, 1.88]
+      - [4.35, 1.88]
+    successor: mid_wb1_e
+
+blocks:
+  block_nw:
+    polygon:
+      - [0.52, 2.01]
+      - [1.99, 2.01]
+      - [1.99, 2.48]
+      - [0.52, 2.48]
+    curb_edges:
+      north:
+        segment: [[0.52, 2.48], [1.99, 2.48]]
+        adjacent_destination_lanes:
+          - top_inner_eb_w
+      east:
+        segment: [[1.99, 2.01], [1.99, 2.48]]
+        adjacent_destination_lanes: []  # 인접 차선이 교차로 스텁 — 정차 불가
+      south:
+        segment: [[0.52, 2.01], [1.99, 2.01]]
+        adjacent_destination_lanes:
+          - mid_wb1_w
+      west:
+        segment: [[0.52, 2.01], [0.52, 2.48]]
+        # 🔴 [] → left_inner_nb_n (2026-08-09 §0-53). 20번(x 0.265~0.515)이 이 연석
+        #   (x=0.52)에 바로 붙어 있다 — 간격 0.005m. 우리집 정차점을 20번 중앙으로
+        #   옮기면서 인접 차선으로 등록한다. 승객은 블록 서쪽 연석에 선다.
+        adjacent_destination_lanes:
+          - left_inner_nb_n
+  block_ne:
+    polygon:
+      - [3.01, 2.01]
+      - [4.48, 2.01]
+      - [4.48, 2.48]
+      - [3.01, 2.48]
+    curb_edges:
+      north:
+        segment: [[3.01, 2.48], [4.48, 2.48]]
+        adjacent_destination_lanes:
+          - top_inner_eb_e
+      east:
+        segment: [[4.48, 2.01], [4.48, 2.48]]
+        adjacent_destination_lanes: []  # 인접 차선이 교차로 스텁 — 정차 불가
+      south:
+        segment: [[3.01, 2.01], [4.48, 2.01]]
+        adjacent_destination_lanes:
+          - mid_wb1_e
+      west:
+        segment: [[3.01, 2.01], [3.01, 2.48]]
+        adjacent_destination_lanes: []  # 인접 차선이 교차로 스텁 — 정차 불가
+  block_sw:
+    polygon:
+      - [0.52, 0.52]
+      - [1.99, 0.52]
+      - [1.99, 0.99]
+      - [0.52, 0.99]
+    curb_edges:
+      north:
+        segment: [[0.52, 0.99], [1.99, 0.99]]
+        adjacent_destination_lanes:
+          - mid_eb2_w
+      east:
+        segment: [[1.99, 0.52], [1.99, 0.99]]
+        adjacent_destination_lanes: []  # 인접 차선이 교차로 스텁 — 정차 불가
+      south:
+        segment: [[0.52, 0.52], [1.99, 0.52]]
+        adjacent_destination_lanes:
+          - bot_inner_wb_w
+      west:
+        segment: [[0.52, 0.52], [0.52, 0.99]]
+        adjacent_destination_lanes: []  # 인접 차선이 교차로 스텁 — 정차 불가
+  block_se:
+    polygon:
+      - [3.01, 0.52]
+      - [4.48, 0.52]
+      - [4.48, 0.99]
+      - [3.01, 0.99]
+    curb_edges:
+      north:
+        segment: [[3.01, 0.99], [4.48, 0.99]]
+        adjacent_destination_lanes:
+          - mid_eb2_e
+      east:
+        segment: [[4.48, 0.52], [4.48, 0.99]]
+        adjacent_destination_lanes: []  # 인접 차선이 교차로 스텁 — 정차 불가
+      south:
+        segment: [[3.01, 0.52], [4.48, 0.52]]
+        adjacent_destination_lanes:
+          - bot_inner_wb_e
+      west:
+        segment: [[3.01, 0.52], [3.01, 0.99]]
+        adjacent_destination_lanes: []  # 인접 차선이 교차로 스텁 — 정차 불가
+
+stop_line_zones:
+  stop_ix_sb1:
+    approach_lane_id: vert_sb1_n
+    expected_center: [2.12, 2.26]
+    activation_distance_m: 0.60
+  stop_ix_sb2:
+    approach_lane_id: vert_sb2_n
+    expected_center: [2.37, 2.26]
+    activation_distance_m: 0.60
+  stop_ix_nb1:
+    approach_lane_id: vert_nb1_s
+    expected_center: [2.63, 0.75]
+    activation_distance_m: 0.60
+  stop_ix_nb2:
+    approach_lane_id: vert_nb2_s
+    expected_center: [2.88, 0.75]
+    activation_distance_m: 0.60
+  stop_ix_wb1:
+    approach_lane_id: mid_wb1_e
+    expected_center: [3.34, 1.88]
+    activation_distance_m: 0.60
+  stop_ix_wb2:
+    approach_lane_id: mid_wb2_e
+    expected_center: [3.34, 1.63]
+    activation_distance_m: 0.60
+  stop_ix_eb1:
+    approach_lane_id: mid_eb1_w
+    expected_center: [1.66, 1.37]
+    activation_distance_m: 0.60
+  stop_ix_eb2:
+    approach_lane_id: mid_eb2_w
+    expected_center: [1.66, 1.12]
+    activation_distance_m: 0.60
+  stop_tee_n_eb:
+    approach_lane_id: top_inner_eb_w
+    expected_center: [1.99, 2.61]
+    activation_distance_m: 0.60
+  stop_tee_n_wb:
+    approach_lane_id: top_outer_wb_e
+    expected_center: [3.01, 2.86]
+    activation_distance_m: 0.60
+  stop_tee_n_nb1:
+    approach_lane_id: vert_nb1_n
+    expected_center: [2.63, 2.49]
+    activation_distance_m: 0.60
+  stop_tee_n_nb2:
+    approach_lane_id: vert_nb2_n
+    expected_center: [2.88, 2.49]
+    activation_distance_m: 0.60
+  stop_tee_s_wb:
+    approach_lane_id: bot_inner_wb_e
+    expected_center: [3.01, 0.39]
+    activation_distance_m: 0.60
+  stop_tee_s_eb:
+    approach_lane_id: bot_outer_eb_w
+    expected_center: [1.99, 0.14]
+    activation_distance_m: 0.60
+  stop_tee_s_sb1:
+    approach_lane_id: vert_sb1_s
+    expected_center: [2.12, 0.52]
+    activation_distance_m: 0.60
+  stop_tee_s_sb2:
+    approach_lane_id: vert_sb2_s
+    expected_center: [2.37, 0.52]
+    activation_distance_m: 0.60
+  stop_tee_w_sb:
+    approach_lane_id: left_outer_sb_n
+    expected_center: [0.14, 2.03]
+    activation_distance_m: 0.60
+  stop_tee_w_nb:
+    approach_lane_id: left_inner_nb_s
+    expected_center: [0.39, 1]
+    activation_distance_m: 0.60
+  stop_tee_w_wb1:
+    approach_lane_id: mid_wb1_w
+    expected_center: [0.52, 1.88]
+    activation_distance_m: 0.60
+  stop_tee_w_wb2:
+    approach_lane_id: mid_wb2_w
+    expected_center: [0.52, 1.63]
+    activation_distance_m: 0.60
+  stop_tee_e_sb:
+    approach_lane_id: right_inner_sb_n
+    expected_center: [4.61, 2.02]
+    activation_distance_m: 0.60
+  stop_tee_e_nb:
+    approach_lane_id: right_outer_nb_s
+    expected_center: [4.86, 1]
+    activation_distance_m: 0.60
+  stop_tee_e_eb1:
+    approach_lane_id: mid_eb1_e
+    expected_center: [4.48, 1.37]
+    activation_distance_m: 0.60
+  stop_tee_e_eb2:
+    approach_lane_id: mid_eb2_e
+    expected_center: [4.48, 1.12]
+    activation_distance_m: 0.60
