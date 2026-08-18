@@ -1,4 +1,4 @@
-# RC카 자율주행 — 차량 파트 제출본 (2026-08-10)
+# RC카 자율주행 - 차량 파트 제출본 (2026-08-10)
 
 2026-08-10 시연에서 **완주**한 차량 주행 코드와, 그 차량에 비전 신호를
 공급하는 **비전 실행체**를 한 묶음으로 정리한 것.
@@ -7,7 +7,7 @@
 | --- | --- | --- |
 | `rc_car/` | 차량 주행 프로세스 (측위·경로·조향·관제 통신·안전) | Jetson Orin Nano |
 | `vision_runner/` | 비전 프로세스 (CSI 캡처 → 버드아이 → YOLO seg → 결과 게시) | 같은 보드, **별도 프로세스** |
-| `map/` | 차선 그래프·장소 정의 (`rc_car` 가 `../map` 으로 참조) | — |
+| `map/` | 차선 그래프·장소 정의 (`rc_car` 가 `../map` 으로 참조) | - |
 
 ```
 . (repo 루트)
@@ -42,7 +42,7 @@
 
 | 필드 | 읽는 모듈 (주행 프로세스) | 기능 |
 | --- | --- | --- |
-| `timestamp` | `SegAdapter` / `MarkAdapter` | 최신 여부 판정 — 기록 후 0.5초가 지난 데이터는 **invalid** 처리 |
+| `timestamp` | `SegAdapter` / `MarkAdapter` | 최신 여부 판정<br>- 기록 후 0.5초가 지난 데이터는 **invalid** 처리 |
 | `seg.{valid, lateral_offset_m, heading_error_deg}` | `RealSegModel` → `SegAdapter` | 차선 중앙 보정량 |
 | `model.detections[].{cls, conf, xyxy_px}` | `FileMarkSource` → `MarkAdapter` | 회전 트리거 판정 |
 | `pixels_per_meter`, `vehicle_axis_px`, `birdseye_size` | `MarkAdapter` | 픽셀 → 미터 환산·횡거리 게이트 |
@@ -66,10 +66,10 @@
 | --- | --- |
 | `vision_runner/vision_runner.py` `compute_seg()` | 행별로 황색선 단면 + 모델 점선 상자를 모아 차량 축을 감싸는 차선 폭 쌍의 중점을 구하고, 그 점들에 직선을 적합해 offset/heading 산출. 쌍이 없는 행은 편측 추정(경계선 + 공칭 반폭)으로 보충 |
 | `rc_car/perception/real_seg_model.py` | 게시 파일 클라이언트. `latest()` 로 최신 seg 반환 |
-| `rc_car/perception/mock_seg_model.py` | 시뮬레이션용 대체 모델 — 실제 비전 없이 차량 위치와 차선 그래프에서 offset/heading 을 계산해 공급 (실차에서는 미사용) |
+| `rc_car/perception/mock_seg_model.py` | 시뮬레이션용 대체 모델<br>- 실제 비전 없이 차량 위치와 차선 그래프에서 offset/heading 을 계산해 공급 (실차에서는 미사용) |
 | `rc_car/perception/seg_adapter.py` | - 4개의 필드 검증<br>- 최신 여부 판정<br>- 부호 반전<br>- 보정 계산 및 클램프<br>- 연속 invalid 시 GPS 단독 전환을 로그로 기록 |
 | `rc_car/perception/perception_worker.py` | 10Hz 관측 스레드 |
-| `rc_car/config/perception.yaml` | 설정 파일 — seg 동작 모드(off/mock/real), 게시 파일 경로, 보정 강도(게인), 보정 상한 |
+| `rc_car/config/perception.yaml` | 설정 파일<br>- seg 동작 모드(off/mock/real)<br>- 게시 파일 경로<br>- 보정 강도(게인)<br>- 보정 상한 |
 
 보정식 (`seg_adapter.py:correction_wheel_deg`)
 
@@ -102,7 +102,7 @@ seg_correction:
 
 | 파일 | 역할 |
 | --- | --- |
-| `rc_car/perception/vision_marks.py` | `MarkAdapter` — 검출 목록에서 트리거 조건 판정 |
+| `rc_car/perception/vision_marks.py` | `MarkAdapter`: 검출 목록에서 트리거 조건 판정 |
 | `rc_car/navigation/turn_table.py` + `config/turn_table.yaml` | 회전별 트리거 사양·조향각·종료 조건 표 |
 | `rc_car/control/lane_follower.py` | 상태 기계 `FOLLOW → ARMED → TURNING → 정렬 종료` |
 
@@ -120,13 +120,13 @@ FOLLOW ──(차선 끝까지 arm_distance)──▶ ARMED ──(① 비전 �
 | --- | --- | --- |
 | ① | 클래스 일치 (`crosswalk` / `stop_line` / `direction_arrow` / `dashed_line`) | 어떤 표식으로 꺾을지 |
 | ② | `conf >= min_conf` | 오검출 배제 |
-| ③ | 상자 **하단** y ≥ 높이 × `near_row_frac` | 표식이 차에 그만큼 가까워짐 — 이 값으로 회전 시작 시점을 조절 |
+| ③ | 상자 **하단** y ≥ 높이 × `near_row_frac` | 표식이 차에 그만큼 가까워짐<br>- 이 값으로 회전 시작 시점을 조절 |
 | ④ | 상자 중심의 횡거리 ≤ `max_lateral_m` | 다른 차선의 표식 제외 (실측에서 정지선이 차선 5~6개 밖까지 검출됨) |
 
 `near_row_frac` 이 낮을수록 표식이 멀리 있을 때 트리거가 작동해 **일찍 꺾음.**
 
-**비전이 멈춰도 회전은 진행됨** — 트리거가 끝까지 작동하지 않으면 `fallback_at_lane_end`
-설정에 따라 차선 끝 좌표에서 회전을 시작함.
+**비전이 멈춰도 회전은 진행됨**
+- 트리거가 끝까지 작동하지 않으면 `fallback_at_lane_end` 설정에 따라 차선 끝 좌표에서 회전을 시작함.
 
 ---
 
@@ -135,11 +135,11 @@ FOLLOW ──(차선 끝까지 arm_distance)──▶ ARMED ──(① 비전 �
 ### 보드 (실차)
 
 ```bash
-# ① 비전 — 주행 프로필 (무선 전송 없음, 온보드 녹화)
+# ① 비전: 주행 프로필 (무선 전송 없음, 온보드 녹화)
 cd vision_runner
 python3 vision_runner.py --record-dir ~/vision_rec/run1
 
-# ② 주행 — seg_mode:real 은 비전 게시 파일이 있어야 기동함
+# ② 주행: seg_mode:real 은 비전 게시 파일이 있어야 기동함
 cd rc_car
 python3 main.py >> ~/veh_MMDD.log 2>&1
 ```
@@ -162,7 +162,7 @@ python3 -m pytest tests -q
 ### 의존
 
 - 주행: `pyyaml`, `websockets` (+ 보드에서 `Adafruit_PCA9685`)
-- 비전: `vision_runner/requirements.txt` — `opencv-python`, `numpy`, `ultralytics`(TensorRT `best.engine`)
+- 비전: `vision_runner/requirements.txt` 의 `opencv-python`, `numpy`, `ultralytics`(TensorRT `best.engine`)
 
 ### 실행 전 채울 값
 
@@ -179,7 +179,7 @@ control_server:
 
 ## 5. 시연 결과 (2026-08-10)
 
-정차점 — 면사무소 (1.20, 0.39) / 우리집 (0.39, 2.25)
+정차점: 면사무소 (1.20, 0.39) / 우리집 (0.39, 2.25)
 
 | # | 시각 | 면사무소 도착 오차 | 우리집 도착 오차 |
 | --- | --- | --- | --- |
@@ -216,19 +216,8 @@ control_server:
 
 | 문제 | 원인 | 해결 |
 | --- | --- | --- |
-| 주행 프로세스가 통째로 멈춘 상태에서 모터가 켜진 채 트랙 이탈 | WiFi 순단 → 로그 출력 정체 → 로깅 락에 전 스레드(감시 스레드 포함)가 함께 멈춤 | 로깅 비블로킹화 + 독립 프로세스 `guard.py` 신설 — 하트비트 파일이 0.7초 이상 갱신되지 않으면 I2C 로 모터 전원을 직접 차단 |
-| 직선 주행 중 차선 이탈·인도 침범 | GPS heading 이 직선에서 +17~80° 튐. 임계값을 넘을 때만 다른 값으로 대체하는 방식은 값이 왔다 갔다 하는 진동 유발 | 연속 헤딩 추정기로 교체 — 자전거 모델로 방위를 이어가며 이동 방향을 조금씩 혼합. 회전 후 정렬 오차 158~174° → 7.7~11.9° |
-| 회전 반경이 계산값보다 큼 | 조향이 지령각의 약 40%만 반영되는 하드웨어 편차 | 원 주행으로 실제 회전 반경을 직접 실측, 실측값 기반 고정 조향(개루프)으로 전환 |
-| 정차 후 도착 보고(complete)가 나가지 않는 교착 | 정차점이 차선 조각 끝에 있으면 조금만 지나쳐 서도 목표 차선 매칭 실패 | 조각 사이(이음매) 위에서는 진입·진출 차선을 모두 도착으로 인정 |
+| 주행 프로세스가 통째로 멈춘 상태에서 모터가 켜진 채 트랙 이탈 | WiFi 연결이 잠깐 끊김 → 로그 출력 정체 → 로깅 락에 전 스레드가 함께 멈춤 | 로깅 비블로킹화 + 독립 프로세스 `guard.py` 신설<br>- 하트비트 파일이 0.7초 이상 갱신되지 않으면 I2C 로 모터 전원을 직접 차단 |
+| 직선 주행 중 차선 이탈·인도 침범 | GPS heading 이 직선에서 +17\~80° 튐. 임계값을 넘을 때만 다른 값으로 대체하는 방식은 값이 왔다 갔다 하는 진동 유발 | 연속 헤딩 추정기로 교체<br>- 자전거 모델로 방위를 이어가며 이동 방향을 조금씩 혼합<br>- 회전 후 정렬 오차 158\~174° → 7.7\~11.9° |
+| 회전 반경이 계산값보다 큼 | 조향이 지령각의 약 40%만 반영되는 하드웨어 편차 | 원 주행으로 실제 회전 반경을 직접 실측, 실측값 기반 고정 조향으로 전환 |
+| 정차 후 도착 보고(complete)가 나가지 않는 교착 | 정차 지점이 차선 끝에 가까우면 조금만 지나쳐 서도 목표 차선을 벗어나 매칭 실패 | 차선과 차선을 잇는 연결 구간 위에 서면 앞뒤 차선을 모두 도착으로 인정 |
 | I2C 오류 반복으로 모터 제어 불능 | 정지 상태 최대 조향 시 전류 급증 → 전압 강하 → 모터 드라이버 칩(PCA9685) 리셋 | 재시도 대신 칩 재초기화(리셋되면 PWM 주파수 설정이 사라짐), 정지 중 조향 동작 제한 |
-
-### 미흡했던 부분과 개선 방향
-
-- **비전 차선 보조**: 보정을 켠 주행에서 좌편향이 발생(부호 또는 편측 추정 오차로 추정)해
-  시연은 보정을 끈 상태로 완주. 정지 상태에서 부호·스케일을 확인하는 캘리브레이션 절차와
-  픽셀 행 → 실거리 변환(세로 캘리브레이션)을 갖춘 뒤 재검증 필요.
-- **방위 출처가 ArUco 하나**: heading 품질 저하가 곧 주행 품질 저하로 직결. IMU 보완을
-  구현했으나 부호·스케일 검증 시간이 부족해 미적용. 센서 검증 절차를 갖춘 IMU 융합이
-  다음 단계.
-- **속도 추정이 좌표 차분 의존**: 엔코더가 없어 저속·위치 유실 구간에서 속도 신뢰도가
-  낮음. 휠 엔코더를 달아 속도·이동량을 직접 측정하는 것이 개선 방향.
