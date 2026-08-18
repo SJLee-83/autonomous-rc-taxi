@@ -164,10 +164,9 @@ python3 -m pytest tests -q
 - 주행: `pyyaml`, `websockets` (+ 보드에서 `Adafruit_PCA9685`)
 - 비전: `vision_runner/requirements.txt` — `opencv-python`, `numpy`, `ultralytics`(TensorRT `best.engine`)
 
-### ⚠️ 실행 전 채워야 하는 값 (공개 제출본이라 비워 둠)
+### 실행 전 채울 값
 
-서버 주소·차량 토큰·개발 PC 경로는 `<...>` 플레이스홀더로 치환해 둠. 실제로 돌리려면
-`rc_car/config/network.yaml` 의 두 줄을 환경에 맞게 채워야 함.
+실제 주행 시 `rc_car/config/network.yaml` 의 두 줄을 환경에 맞게 채움.
 
 ```yaml
 localization:
@@ -175,10 +174,6 @@ localization:
 control_server:
   websocket_url: wss://<control-server-host>/ws/vehicle?token=<VEHICLE_TOKEN>   # 관제 서버
 ```
-
-`tools/` 의 일부 개발 도구(`t4_wireless_e2e.py`, `sim_world.py`, `fake_camera.py`,
-`integration_sim.py`)와 `vision_runner/seg_replay.py` 에도 개발 PC 경로가 플레이스홀더로
-남아 있음. **주행·비전 본체 실행에는 영향 없음.**
 
 ---
 
@@ -198,23 +193,7 @@ control_server:
 
 ---
 
-## 6. 이 제출본의 상태
-
-1. **시연 당일 비전은 꺼져 있었음.** 완주 3회는 `--seg-mode off`(GPS 단독 + 좌표 기준
-   회전)로 달성. 비전 관련 코드는 8/5~8/8 실주행에서 검증했고 이 제출본에 전부 포함돼
-   있으나, **8/10 완주 기록 자체는 비전 없이 낸 것.**
-2. **차선 보정 게인(30.0 / 0.3)은 실주행 재검증 전 값** — 8/6 주행에서 좌편향이 발생해
-   시연은 보정을 끈 상태로 완주. 끄려면 `perception.yaml` 의 두 게인을 `0.0` 으로 설정.
-3. **단위 테스트는 전량 통과** — 383건 중 382 passed, 1 skipped(Windows에 없는
-   SIGHUP), 서브테스트 462. 2026-08-10 제출 원본에서는 15건이 실패했었음 — 원인은 코드
-   결함이 아니라 `rc_car`(8/8 스냅샷)와 `map`(8/9 갱신본)의 **버전 불일치**로, 실차
-   튜닝으로 바뀐 값을 테스트 기대값이 따라가지 못한 것. 이 정리본은 기대값을 시연
-   확정값(`turn_table` 수치, 도착 반경 0.40)으로 갱신해 해소. 주행 동작에는 원래부터
-   영향이 없었음 — 시연 3회 완주가 그 조합 그대로였음.
-
----
-
-## 7. 주요 코드 구성 (읽는 순서)
+## 6. 주요 코드 구성 (읽는 순서)
 
 | 관심사 | 파일 |
 | --- | --- |
