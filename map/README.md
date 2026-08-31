@@ -117,5 +117,5 @@ python tools/build_places_overlay.py          # 그림 재생성 (PIL 필요)
 - 좌표는 지도 이미지 픽셀 판독값임 (±2cm 추정). 실주행에서 드러난 서버 좌표계와의 어긋남(축척 x 3.0% / y 4.7% 부족)은 맵 재생성이 아니라 차량 pose 수신부의 아핀 변환으로 흡수했음
   - `rc_car/config/network.yaml` 의 `frame_transform`, 잔차 약 3.5cm
   - 맵 소비자(관제·정차점) 전체가 무수정으로 유지됐음
-- 커넥터 반경대로의 원호 추종은 실차에서 폐기했음. 회전은 실측 반경 기반의 개루프 고정 조향(`rc_car/config/turn_table.yaml`)으로 대체했음
+- 커넥터 반경대로의 원호 추종은 실차에서 폐기했음. 회전은 실측 반경 기반의 고정 조향(`rc_car/config/turn_table.yaml`)으로 대체했음
   - 커넥터 기하는 경로 위상과 회전 지시에만 씀 (`lane_route` 가 원호를 버리고 Turn 으로 접음)

@@ -92,7 +92,7 @@ python tools\integration_sim.py --scenarios s1  # 개별
 ## 검증 현황
 
 - 테스트 383건(서브테스트 462) PASS, 1 skip (Windows SIGHUP)
-- 통합 시뮬 S1\~S6 전부 PASS. GPS 서버 + 합성 카메라 + 관제 + 차량 4프로세스 실통신 폐루프
+- 통합 시뮬 S1\~S6 전부 PASS. GPS 서버 + 합성 카메라 + 관제 + 차량 4프로세스 실통신 구성
 - 실차 무선 E2E 전 시나리오 PASS. 젯슨과 PC(웹팀 Java 백엔드 + GPS 서버) 사이 WiFi 양축
 - 2026-07-31 첫 실물 자율주행 완주. 관제 명령 → 경로 계획 → 주행 → 정차 → 완료 보고
 - 2026-08-10 시연 결과는 `../README.md` §5 참조
