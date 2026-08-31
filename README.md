@@ -24,19 +24,34 @@
 주행 코드는 카메라에 직접 접근하지 않고 비전이 인식 결과를 tmpfs 파일에 계속 덮어쓰면,
 주행 쪽이 자기 주기(10Hz)로 그 파일을 읽어감(pull). 주행과 비전 프로세스는 파일 단위로 통신.
 
+```mermaid
+flowchart LR
+    CAM["카메라 CSI"]
+
+    subgraph VISION["vision_runner · 5 FPS"]
+        direction TB
+        B1["BirdseyeExtractor<br/>버드아이 워프"]
+        B2["extract_yellow<br/>황색선 · 색 휴리스틱"]
+        B3["YOLO best.engine<br/>점선 · 정지선 · 횡단보도 · 화살표"]
+        B4["compute_seg<br/>차선 중앙 offset · heading"]
+        B1 --> B2 --> B3 --> B4
+    end
+
+    subgraph DRIVE["rc_car · 주행 50Hz · 인지 10Hz"]
+        direction TB
+        PW["PerceptionWorker<br/>10Hz pull"]
+        SA["SegAdapter<br/>차선 보조 · 횡보정"]
+        MA["MarkAdapter<br/>조향 트리거 · 회전 개시"]
+        LF["LaneFollower<br/>조향 명령"]
+        PW --> SA --> LF
+        PW --> MA --> LF
+    end
+
+    CAM --> B1
+    B4 -->|"vision_latest.json 게시"| PW
 ```
- [카메라 CSI]
-      │
-      ▼
- vision_runner (5 FPS)                        rc_car (주행 50Hz / 인지 10Hz)
-   BirdseyeExtractor  워프                       PerceptionWorker  10Hz pull
-   extract_yellow()   황색선 = 색 휴리스틱          ├─ SegAdapter   → 차선 보조 (횡보정)
-   YOLO best.engine   점선·정지선·횡단보도·화살표      └─ MarkAdapter  → 조향 트리거 (회전 개시)
-   compute_seg()      차선 중앙 offset/heading                │
-      │                                                     ▼
-      └──▶ /dev/shm/vision_latest.json ──────────────▶ LaneFollower (조향 명령)
-              (timestamp 포함, 원자적 교체)
-```
+
+게시 경로는 `/dev/shm/vision_latest.json` 임. 임시 파일을 쓴 뒤 이름을 바꾸는 원자적 교체이고, `timestamp` 를 함께 실어 읽는 쪽이 최신 여부를 판정함.
 
 게시 파일(`vision_latest.json`)의 필드와 읽는 쪽의 사용처:
 
@@ -181,14 +196,12 @@ control_server:
 
 정차점: 면사무소 (1.20, 0.39) / 우리집 (0.39, 2.25)
 
-| # | 시각 | 면사무소 도착 오차 | 우리집 도착 오차 |
-| --- | --- | --- | --- |
-| 1 | 07:45 | 16.3 cm | 19.3 cm |
-| 2 | 08:59 | 16.8 cm | 18.0 cm |
-| 3 | 09:16 | **12.2 cm** | **8.7 cm** |
+| 시각 | 면사무소 도착 오차 | 우리집 도착 오차 |
+| --- | --- | --- |
+| 09:16 | **12.2 cm** | **8.7 cm** |
 
-- 3회 모두 **사람 개입 없이** 호출 → 배차 → 이동 → 도착 → `complete` → 다음 배차까지 완주
-- 관제 왕복(`complete` ↔ `stop`) 6회 전건 성공
+- **사람 개입 없이** 호출 → 배차 → 이동 → 도착 → `complete` → 다음 배차까지 완주
+- 관제 왕복(`complete` ↔ `stop`) 전건 성공
 - 기동 시 등록된 회전 트리거 표 7종: `11->22, 4->29, 29->7, 7->22, 20->3, 22->14, 14->19`
 
 ---
