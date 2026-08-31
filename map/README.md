@@ -93,7 +93,7 @@ python -m pytest tests/unit/test_lane_map.py   # 제약 전체 재검증
 
 교착 자체는 이후 도착 게이트 보완(이음매 위에서 진입 차선과 진출 차선을 함께 인정하는 `LaneMap.arrival_lane_candidates`, 2026-07-30)으로 한 번 더 방어되지만, 배치 규칙은 그대로 유지함.
 
-반경 0.40 기준의 알려진 예외는 `places.yaml` 주석과 테스트 말뚝(`test_arbitrary_destination`)에 근거와 함께 명시돼 있음.
+반경 0.40 기준의 알려진 예외는 `places.yaml` 주석과 회귀 방지 테스트(`test_arbitrary_destination`)에 근거와 함께 명시돼 있음.
 
 - 우리집 20번 차선은 길이가 0.21m 라 제약을 못 지키지만, 반경이 인접 이음매를 전부 덮어 무해함 (8/10 주행 3회 실증)
 - 일부 차선 끝 2cm 밴드의 원단 스윕 9좌표
