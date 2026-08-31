@@ -5,12 +5,14 @@
 | 파일 | 역할 |
 |---|---|
 | `vision_runner.py` | 실행 진입점. 캡처 → 버드아이 워프 → 노란선 색 검출 + 세그 추론 → 차선 중심 계산 → JSON 게시 |
-| `birdseye_extractor.py` | IMX708 렌즈 왜곡 보정 + 버드아이 투영. `calibration/` 의 JSON 두 개를 읽음 |
-| `run_csi_direct.py` | CSI 카메라 프레임 공급(GStreamer 파이프라인 구성·프레임 이터레이터). 단독 실행 시 게시·추론 없이 추출기만 돌리는 점검용 |
+| `birdseye_extractor.py` | **Vision 파트 제공 모듈.** IMX708 렌즈 왜곡 보정 + 버드아이 투영. `calibration/` 의 JSON 두 개를 읽음 |
+| `run_csi_direct.py` | **Vision 파트 제공 모듈.** CSI 카메라 프레임 공급(GStreamer 파이프라인 구성·프레임 이터레이터). 단독 실행 시 게시·추론 없이 추출기만 돌리는 점검용 |
 | `seg_replay.py` | 오프라인 재처리 하네스. 녹화 오버레이만으로 `compute_seg` 변형의 가동률을 재측정함 |
 | `calibration/calibration.json` | 렌즈 보정 계수 (`camera_matrix`·`dist_coeffs`, RMS·채택 이미지 수 포함) |
 | `calibration/birdseye.json` | 버드아이 변환 (호모그래피·`pixels_per_meter`·출력 크기) |
 | `requirements.txt` | numpy만 명시. OpenCV 는 JetPack 제공본을 그대로 씀 |
+
+> 출처: `birdseye_extractor.py` 와 `run_csi_direct.py` 는 Vision 파트에서 받은 실행 의존성임. 나머지 파일과 이 문서는 차량 파트에서 작성했음.
 
 ## 검출 역할 분담 (2026-08-05 확정)
 

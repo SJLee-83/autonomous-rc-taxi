@@ -6,6 +6,7 @@
 | `places.yaml` | 🔴 **시연 장소 6곳의 정본.** 관제 서버가 사전 저장해 `command.loc` 으로 보내는 좌표임 (아래 절 참조) |
 | `main_track_map_overlay.png` | 검수용. 그래프를 시연지도 위에 겹쳐 그린 그림 (하늘색=inner 서킷 / 자홍=outer 서킷 / 주황=직진, 파랑=좌회전, 빨강=우회전 커넥터) |
 | `places_overlay.png` | 검수용. `places.yaml` 을 지도 위에 그린 그림. `rc_car/tools/build_places_overlay.py` 로 생성 |
+| `segmentation_label_example.png` | 참고용. 세그 모델 학습 라벨 예시 1장 (횡단보도·정지선·화살표·점선·블록 경계 폴리곤). 모델과 데이터셋은 이 저장소에 미포함 |
 
 ## 이 파일의 지위 (2026-07-28 명확화)
 
