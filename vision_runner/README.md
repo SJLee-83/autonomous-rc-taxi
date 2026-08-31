@@ -74,7 +74,7 @@ python3 vision_runner.py \
 
 | 인자 | 기본값 | 설명 |
 |---|---|---|
-| `--engine` | `~/vision/best.engine` | TensorRT 세그 엔진 경로 |
+| `--engine` | `~/vision/best.engine` | TensorRT 세그 엔진 경로 (저장소 미포함. 보드·JetPack 버전 종속이라 같은 보드에서 변환 필요) |
 | `--fps` | 5 | 처리 목표 주기 |
 | `--conf` | 0.4 | 모델 신뢰도 임계 |
 | `--calibration-dir` | `calibration/` | 보정 JSON 위치 |
@@ -84,19 +84,11 @@ python3 vision_runner.py \
 | `--sensor-id` · `--sensor-mode` | 0 · 1 | CSI 센서 선택·모드 |
 | `--max-frames` | 0 | 0 이면 무제한 |
 
-`seg_replay.py` 는 보드 없이 실행 가능
+`seg_replay.py` 는 보드 없이 실행 가능 (입력 녹화본은 저장소 미포함)
 
 ```
 python seg_replay.py [프레임수]
 ```
-
-## 저장소에 없는 것
-
-| 대상 | 이유 |
-|---|---|
-| `best.engine` | TensorRT 엔진은 보드·JetPack 버전 종속. 같은 보드에서 재변환 필요 |
-| 학습 데이터셋·가중치 원본 | 용량 |
-| 녹화본(`vision_rec/`)·`trace.jsonl` | 용량. 재현은 `seg_replay.py` |
 
 ## 알려진 한계
 
