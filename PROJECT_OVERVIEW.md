@@ -92,7 +92,7 @@ flowchart TB
 | 프론트 | React 19, TypeScript, Vite, Tailwind 4, PWA. 3화면 + 공유 MapView | 약 3,700줄 |
 | 인프라 | AWS EC2(Ubuntu 24.04), nginx + Let's Encrypt, systemd, 원격 배포 스크립트 | 해당 없음 |
 | 검증 도구 | pytest, JUnit, fake-vehicle(규약 준수 시뮬레이터, 하드웨어 없이 E2E), real / mock / sim 드라이버 3종 교체 | 테스트 총 약 590건 |
-| 하드웨어 | PCA9685 I2C 모터·서보 제어, CSI 카메라(Arducam IMX708). 서보 중립 108(물리 118), 클램프 48\~168, 축거 0.14m, 최고 속도 0.22m/s(실측) | 해당 없음 |
+| 하드웨어 | PCA9685 I2C 모터·서보 제어, CSI 카메라(Arducam IMX708). 서보 중립 108(물리 118), 실효 조향 클램프 51\~165(`vehicle.yaml`, 벤더 단 48\~168), 축거 0.14m, 최고 속도 0.22m/s(실측) | 해당 없음 |
 
 ---
 
