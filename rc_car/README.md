@@ -18,8 +18,8 @@ python tools/probe_gps.py --seconds 30       # 노이즈 측정
 python tools/probe_gps.py --url wss://127.0.0.1:8000/ws/v1/localization
 ```
 
-- Jetson 불필요. `--driver-mode mock` 으로 전체 로직이 PC에서 구동
-- config 기본값은 `driver_mode: real`, `seg_mode: real`. 보드 재배포 시 mock 회귀 방지용 설정이므로 파일 수정 대신 플래그로 덮어씀
+- Jetson 없이 `--driver-mode mock` 으로 전체 로직 PC 구동
+- config 기본값 `driver_mode: real` · `seg_mode: real` 은 보드 재배포 시 mock 회귀 방지용이므로 파일 수정 대신 플래그로 오버라이드
 - `seg_mode: real` 은 비전 게시 파일이 없으면 기동 거부. PC 에서는 `--seg-mode off` 필수
 - 실물 드라이버는 `hardware/` 의 Real\* 클래스 (vendor 원본 무수정 + 브리지)
 
@@ -42,7 +42,7 @@ cd <GPS서버경로>
 ```
 
 - `certs/` 가 비어 있으면 TLS 자동 해제(`ws://`). `wss://` 경로 검증 시 인증서 선생성
-- 차량 쪽은 `config/network.yaml` 의 `websocket_url` 을 `wss://127.0.0.1:8000/...` 으로 변경하거나 `probe_gps.py --url` 로 덮어씀
+- 차량 쪽은 `config/network.yaml` 의 `websocket_url` 을 `wss://127.0.0.1:8000/...` 으로 변경, 또는 `probe_gps.py --url` 로 오버라이드
 - 카메라 없이 `found=false` 흐름·재구독·`close 4404` 까지 검증 가능. 카메라 연결 시 `found=true` 전 경로 구동
 
 ### 통합 시뮬 (전 시나리오 가상 주행)
@@ -66,7 +66,7 @@ python tools\integration_sim.py --scenarios s1  # 개별
 | --- | --- |
 | `main.py` 는 조립만 | `main.py` → `app/runtime.py` (initialize / start / shutdown §25) |
 | 상태는 StateStore 중앙 관리 | `core/state_store.py`. RLock + 불변 스냅샷, pose 순서 역전 거부 |
-| 하드웨어 추상화 | `hardware/`. 상위는 `set_throttle` 과 `set_angle_deg`(바퀴각)만 사용. 서보 변환(108±, 0.526)은 드라이버 계층만 보유 |
+| 하드웨어 추상화 | `hardware/`. 상위는 `set_throttle` 과 `set_angle_deg`(바퀴각)만 사용하고 서보 변환(108±, 0.526)은 드라이버 계층 전용 |
 
 `safety/safety_supervisor.py` 가 모든 모터 출력의 단일 통과점. 정지 래치 / 유효 pose 없음 / 비주행 상태 중 하나라도 걸리면 정지 출력
 
