@@ -2,8 +2,8 @@
 
 | 파일 | 지위 |
 |---|---|
-| `main_track_map.yaml` | 🔴 **맵 데이터의 유일한 정본.** 차량(rc_car)과 관제 서버가 이 파일 하나를 읽음<br>- **사본 금지**: 서버와 차량이 다른 맵을 보면 좌표 보정 무효 |
-| `places.yaml` | 🔴 **시연 장소 6곳의 정본.** 관제 서버가 사전 저장해 `command.loc` 으로 송신하는 좌표 |
+| `main_track_map.yaml` | **맵 데이터의 유일한 정본.** 차량(rc_car)·관제 서버 공용 단일 파일<br>- **사본 금지**: 서버와 차량이 다른 맵을 보면 좌표 보정 무효 |
+| `places.yaml` | **시연 장소 6곳의 정본.** 관제 서버가 사전 저장해 `command.loc` 으로 송신하는 좌표 |
 | `main_track_map_overlay.png` | 검수용. 그래프를 시연지도 위에 겹쳐 그린 그림 (하늘색=inner 서킷 / 자홍=outer 서킷 / 주황=직진, 파랑=좌회전, 빨강=우회전 커넥터) |
 | `places_overlay.png` | 검수용. `places.yaml` 을 지도 위에 그린 그림. `rc_car/tools/build_places_overlay.py` 로 생성 |
 | `segmentation_label_example.png` | 참고용. 세그 모델 학습 라벨 예시 1장 (횡단보도·정지선·화살표·점선·블록 경계 폴리곤). 모델·데이터셋은 저장소 미포함 |
@@ -60,7 +60,7 @@ python -m pytest tests/unit/test_lane_map.py   # 제약 전체 재검증
 2. 시연 시작 위치는 임의 차선 가능
 3. 참고: 승객 블록 curb 인접 차선은 전부 `circuit: inner`
 
-⚠️ `*_far` 커넥터 16개 삭제 시 맵이 다시 두 순환계로 분리. 로더가 전 차선 쌍 도달성 검증으로 로드를 거부하고, `rc_car/tests/unit/test_lane_map.py` 가 이 구조를 테스트로 고정
+`*_far` 커넥터 16개 삭제 시 맵이 다시 두 순환계로 분리. 로더가 전 차선 쌍 도달성 검증으로 로드를 거부하고, `rc_car/tests/unit/test_lane_map.py` 가 이 구조를 테스트로 고정
 
 ## 시연 장소 표 `places.yaml` (관제 서버 필독)
 
@@ -81,7 +81,7 @@ python -m pytest tests/unit/test_lane_map.py   # 제약 전체 재검증
 - 우리집은 2026-08-09 에 3번 차선(`top_inner_eb_w`)에서 20번 차선 중앙으로 이동. 착지 실패가 잦던 `20->3` 우회전을 노선에서 제외하려는 목적
 - 보건소·경로당·시장은 2026-08-04 차선 병합으로 이음매 정차가 허용되면서 블록 중앙 최적 좌표로 원복
 
-### 🔴 정차점 배치 규칙 (차선 조각 끝 회피)
+### 정차점 배치 규칙 (차선 조각 끝 회피)
 
 > **정차점은 차선 조각 끝에서 `arrival_radius_m`(0.40) + 여유(`end_margin_m` 0.05) 이상 이격**
 
