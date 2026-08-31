@@ -14,25 +14,34 @@
 
 ## 1. 시스템 아키텍처
 
-물리적으로 3개 프로세스와 2개 서버로 분리했음. 한 덩어리로 묶지 않은 이유는 각각의 실패가 나머지를 죽이지 않게 하기 위해서임.
+한 구성 요소의 장애가 나머지로 번지지 않도록 물리적으로 3개 프로세스와 2개 서버로 분리했음.
 
-```
-[삼각대 카메라 2대 + ArUco]    [승객/보호자/관제 화면 3종 (React PWA)]
-        │                              ▲ WS push        │ REST(호출·승하차)
-        ▼                              │                ▼
-[GPS 위치 서버] ──ws 10Hz──┐   [Java 관제 서버 :8080  ← nginx/HTTPS]
-  (좌표·방위)              │      │ command(move/stop/resume)
-                           ▼      ▼ ▲ info 5Hz / report
-                    ┌──── [Jetson Orin Nano] ────────────┐
-                    │ ① main.py  측위→경로→제어→통신      │
-                    │      ▲ pull (최신 여부 0.5s 판정)   │
-                    │      │ /dev/shm/vision_latest.json  │
-                    │ ② vision_runner  카메라→버드아이→YOLO│
-                    │ ③ guard.py  하트비트 감시→I2C 차단   │
-                    └─────────────────────────────────────┘
+```mermaid
+flowchart TB
+    CAM["삼각대 카메라 2대 + ArUco"]
+    GPS["GPS 위치 서버<br/>좌표 · 방위"]
+    WEB["화면 3종 · React PWA<br/>승객 · 보호자 · 관제"]
+    CTRL["Java 관제 서버 :8080<br/>nginx · HTTPS"]
+
+    subgraph BOARD["Jetson Orin Nano"]
+        MAIN["① main.py<br/>측위 → 경로 → 제어 → 통신"]
+        VIS["② vision_runner<br/>카메라 → 버드아이 → YOLO"]
+        GUARD["③ guard.py<br/>하트비트 감시 → I2C 차단"]
+    end
+
+    CAM --> GPS
+    WEB -->|"REST 호출 · 승하차"| CTRL
+    CTRL -->|"WS push"| WEB
+    GPS -->|"ws 10Hz 좌표 · 방위"| MAIN
+    CTRL -->|"command move · stop · resume"| MAIN
+    MAIN -->|"info 5Hz · report"| CTRL
+    VIS -->|"vision_latest.json 게시"| MAIN
+    MAIN -.->|"하트비트"| GUARD
 ```
 
-| 노드 | 역할 | 죽으면 |
+비전 게시물은 차량이 자기 주기로 읽어 가고, 기록 후 0.5초가 지나면 최신이 아닌 것으로 처리함.
+
+| 노드 | 역할 | 장애 시 |
 |---|---|---|
 | GPS 위치 서버 | 삼각대 듀얼 카메라 + ArUco 마커로 차량 좌표·방위를 10Hz push | 차량이 터널 모드(데드레커닝)로 전환. 한도 초과 시 정지 |
 | 관제 서버 | 라이드 상태머신, 경로 명령, 화면 3종 서빙 | 차량이 최대 3초 내 자체 정지 후 복구 신호까지 대기 |
@@ -98,7 +107,7 @@
 
 ### 4-2. 대체 동작 사슬 (모든 연결에 대체 동작이 있음)
 
-- **비전 죽음**: 게시 파일 timestamp 가 낡아 자동으로 invalid 판정됨. GPS 좌표 단독으로 주행을 계속하며, 회전 트리거는 차선 끝 좌표로 대체함
+- **비전 중단**: 게시 파일 timestamp 가 낡아 자동으로 invalid 판정됨. GPS 좌표 단독으로 주행을 계속하며, 회전 트리거는 차선 끝 좌표로 대체함
   - 비전 0으로도 완주가 가능함. 실제 최종 시연이 이 모드였음
 - **GPS 유실 0.6초** (10Hz x 6프레임): 터널 모드로 전환함. 적용된 제어 명령을 자전거 모델로 적분하며, 한도는 1.2m / 30s 임. 초과 시 정지함
   - 자기 위치를 모르는 차는 달리지 않는다는 원칙임
