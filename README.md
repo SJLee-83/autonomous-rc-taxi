@@ -2,6 +2,10 @@
 
 2026-08-10 시연 완주 차량의 주행 코드와 비전 실행체 묶음.
 
+| ![트랙 위 차량](docs/images/vehicle_on_track.jpg) | ![교차로 주행](docs/images/drive_intersection_0808.gif) |
+| :---: | :---: |
+| 차량 (ArUco 마커 큐브 · 카메라 마운트) | 2026-08-08 주행, 교차로 진입 구간 (비전 포함 전 스택, 시연 이틀 전) |
+
 | 폴더 | 내용 | 실행 위치 |
 | --- | --- | --- |
 | `rc_car/` | 차량 주행 프로세스 (측위·경로·조향·관제 통신·안전) | Jetson Orin Nano |
@@ -13,6 +17,7 @@
 ├── rc_car/            # 주행 (python3 main.py)
 ├── vision_runner/     # 비전 (python3 vision_runner.py)
 ├── map/               # main_track_map.yaml · places.yaml
+├── docs/images/       # README 사진·gif
 └── README.md
 ```
 
